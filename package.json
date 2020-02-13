@@ -1,0 +1,13 @@
+{
+  "name": "webscraper",
+  "version": "1.0.0",
+  "description": "Web scraper for Recipedia",
+  "main": "index.js",
+  "repository": "git@github.com:recipedia-uofa/webscraper.git",
+  "author": "jhryniw <jhryniw@gmail.com>",
+  "license": "MIT",
+  "private": false,
+  "devDependencies": {
+    "puppeteer": "^2.1.1"
+  }
+}
