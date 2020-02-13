@@ -2,13 +2,19 @@ const puppeteer = require('puppeteer');
 const fs = require('fs');
 const recipeBaseUrl = 'https://www.allrecipes.com/recipe/'
 
-const dirName = new Date().toISOString();
+const downloadBasePath = './download'
+const downloadPath = downloadBasePath + '/' + new Date().toISOString();
 
-const startId = 8000;
-const endId = 8010;
+const startId = 6663;
+const endId = 269344;
 
-if (!fs.existsSync(dirName)){
-  fs.mkdirSync(dirName);
+
+if (!fs.existsSync(downloadBasePath)){
+  fs.mkdirSync(downloadBasePath);
+}
+
+if (!fs.existsSync(downloadPath)){
+  fs.mkdirSync(downloadPath);
 }
 
 function sleep(ms) {
@@ -18,14 +24,14 @@ function sleep(ms) {
 async function download_recipe(page, recipeId) {
   await page.goto(recipeBaseUrl + recipeId.toString(), {waitUntil: 'networkidle2'});
   const html = await page.content();
-  fs.writeFile(dirName + '/' + recipeId + '.html', html, () => {
-    console.log(recipeId + ' Saved!');
+  fs.writeFile(downloadPath + '/' + recipeId + '.html', html, () => {
+    console.log(recipeId + ' saved!');
   });
 }
 
 (async () => {
 
-  const browser = await puppeteer.launch({headless: false});
+  const browser = await puppeteer.launch({headless: true});
   const page = await browser.newPage();
 
   await page.setRequestInterception(true);
