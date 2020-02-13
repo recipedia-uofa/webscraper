@@ -27,12 +27,12 @@ async function download_recipe(browser, recipeId) {
 
 (async () => {
 
-  const browser = await puppeteer.launch(headless=false);
+  const browser = await puppeteer.launch({headless: false});
 
     try {
       for (let i = startId; i < endId; i++) {
         await download_recipe(browser, i);
-        
+
       }
 
       await Promise.all(downloads);
