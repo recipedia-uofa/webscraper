@@ -5,9 +5,10 @@ const recipeBaseUrl = 'https://www.allrecipes.com/recipe/'
 const downloadBasePath = './download'
 const downloadPath = downloadBasePath + '/' + new Date().toISOString();
 
-const startId = 6663;
+const startId = 8542;
 const endId = 269344;
 
+const maxRetry = 10;
 
 if (!fs.existsSync(downloadBasePath)){
   fs.mkdirSync(downloadBasePath);
@@ -42,13 +43,17 @@ async function download_recipe(page, recipeId) {
       request.continue();
   });
 
-    try {
-      for (let i = startId; i < endId; i++) {
-        await download_recipe(page, i);
+  for (let recipeId = startId; recipeId < endId; recipeId++) {
+    for (let attempt = 0; attempt < maxRetry; attempt++) {
+      try {
+        await download_recipe(page, recipeId);
+        break; // succeeds, go to the next recipeId
+      } catch(err) {
+        console.log(`Failed for recipeId=${recipeId} for attempt=${attempt}`);
+        console.log(err);
+        continue
       }
-    } catch (err) {
-      console.log(err);
-    } finally {
-      await browser.close();
     }
+  }
+  await browser.close();
 })();
