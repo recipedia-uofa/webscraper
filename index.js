@@ -53,7 +53,13 @@ async function download_recipe(page, recipeId) {
       } catch(err) {
         console.log(`Failed for recipeId=${recipeId} for attempt=${attempt}`);
         console.log(err);
-        continue
+        if (attempt == maxRetry - 1) {
+          await browser.close();
+          return;
+        }
+        else {
+          continue;
+        }
       }
     }
   }
