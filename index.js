@@ -9,6 +9,7 @@ const startId = 8542;
 const endId = 269344;
 
 const maxRetry = 10;
+const sleepTime = 1000; // 1s
 
 if (!fs.existsSync(downloadBasePath)){
   fs.mkdirSync(downloadBasePath);
@@ -46,6 +47,7 @@ async function download_recipe(page, recipeId) {
   for (let recipeId = startId; recipeId < endId; recipeId++) {
     for (let attempt = 0; attempt < maxRetry; attempt++) {
       try {
+        await sleep(Math.floor(sleepTime + Math.random() * 1000));
         await download_recipe(page, recipeId);
         break; // succeeds, go to the next recipeId
       } catch(err) {
