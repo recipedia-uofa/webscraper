@@ -9,5 +9,8 @@
   "private": false,
   "devDependencies": {
     "puppeteer": "^2.1.1"
+  },
+  "dependencies": {
+    "argparse": "^1.0.10"
   }
 }
