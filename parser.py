@@ -7,6 +7,12 @@ import sys
 import traceback
 
 
+class NoNutritionFactsException(Exception):
+    '''Thrown when nutrition facts are not present in the html file
+    '''
+    pass
+
+
 class Recipe:
     separator = '|'  # used to separate ingredients
 
@@ -18,7 +24,12 @@ class Recipe:
         self.img_url = ''
         self.servings = 0
         self.prep_time = 0
-        self.calories = 0
+        self.calories = 0  # calories/serving
+        self.fat = 0  # g/serving
+        self.carbohydrates = 0  # g/serving
+        self.protein = 0  # g/serving
+        self.cholesterol = 0  # mg/serving
+        self.sodium = 0  # mg/serving
 
     def __str__(self):
         return ','.join([
@@ -29,7 +40,12 @@ class Recipe:
             '\"{}\"'.format(self.img_url),
             '\"{}\"'.format(str(self.servings)),
             '\"{}\"'.format(str(self.prep_time)),
-            '\"{}\"'.format(str(self.calories))
+            '\"{}\"'.format(str(self.calories)),
+            '\"{}\"'.format(str(self.fat)),
+            '\"{}\"'.format(str(self.carbohydrates)),
+            '\"{}\"'.format(str(self.protein)),
+            '\"{}\"'.format(str(self.cholesterol)),
+            '\"{}\"'.format(str(self.sodium)),
         ])
 
 
@@ -82,13 +98,39 @@ def parse_recipe_html(path):
         except AttributeError:
             recipe.prep_time = 0
 
-        # Nutrition Facts
-        recipe.calories = int(
-            re.search(
-                r'(\d+) calories',
-                soup.find('span', {'itemprop': 'calories'}).text
-            ).group(1)
-        )
+        try:
+            # Nutrition Facts
+            recipe.calories = int(
+                re.search(
+                    r'(\d+) calories',
+                    soup.find('span', {'itemprop': 'calories'}).text
+                ).group(1)
+            )
+
+            recipe.fat = float(
+                soup.find('span', {'itemprop': 'fatContent'}).text)
+
+            recipe.carbohydrates = float(
+                soup.find('span', {'itemprop': 'carbohydrateContent'}).text)
+
+            recipe.protein = float(
+                soup.find('span', {'itemprop': 'proteinContent'}).text)
+
+            cholesterol_str = soup.find(
+                'span', {'itemprop': 'cholesterolContent'}).text
+            if (cholesterol_str == '< 1 '):
+                recipe.cholesterol = 0
+            else:
+                recipe.cholesterol = float(cholesterol_str)
+
+            sodium_str = soup.find('span', {'itemprop': 'sodiumContent'}).text
+            if (sodium_str == '< 1 '):
+                recipe.sodium = 0
+            else:
+                recipe.sodium = float(sodium_str)
+        except:
+            raise(NoNutritionFactsException)
+
         return recipe
 
 
@@ -107,7 +149,7 @@ if __name__ == '__main__':
         '--output',
         dest='output',
         help='path to the output file',
-        default = 'data.csv',
+        default='data.csv',
         type=str,
     )
     args = parser.parse_args()
@@ -126,6 +168,8 @@ if __name__ == '__main__':
                         success = success + 1
                     except KeyboardInterrupt:
                         sys.exit()
+                    except NoNutritionFactsException:
+                        print('No nutrition facts for {}'.format(file))
                     except:
                         print('Failed', file)
     print('{}/{} succeeded!'.format(success, total))
