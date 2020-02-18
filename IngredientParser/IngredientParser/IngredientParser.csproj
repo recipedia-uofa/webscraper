@@ -6,6 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="4.7.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="FluentNHibernate">
       <HintPath>kitchenpc\FluentNHibernate.dll</HintPath>
     </Reference>
