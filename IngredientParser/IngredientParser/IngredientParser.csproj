@@ -5,4 +5,28 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Reference Include="FluentNHibernate">
+      <HintPath>kitchenpc\FluentNHibernate.dll</HintPath>
+    </Reference>
+    <Reference Include="Iesi.Collections">
+      <HintPath>kitchenpc\Iesi.Collections.dll</HintPath>
+    </Reference>
+    <Reference Include="KitchenPC">
+      <HintPath>kitchenpc\KitchenPC.dll</HintPath>
+    </Reference>
+    <Reference Include="KitchenPC.DB">
+      <HintPath>kitchenpc\KitchenPC.DB.dll</HintPath>
+    </Reference>
+    <Reference Include="log4net">
+      <HintPath>kitchenpc\log4net.dll</HintPath>
+    </Reference>
+    <Reference Include="NHibernate">
+      <HintPath>kitchenpc\NHibernate.dll</HintPath>
+    </Reference>
+    <Reference Include="Npgsql">
+      <HintPath>kitchenpc\Npgsql.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>
