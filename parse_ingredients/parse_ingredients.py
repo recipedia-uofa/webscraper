@@ -11,7 +11,9 @@ test_ingredients = [
     r'1 egg',
     r'2 eggs',
     r'1/2 teaspoon salt',
-    # r'1/2 tablespoon butter, melted',
+    r'1/2 tablespoon butter, melted',
+    r'1/2 cup frozen blueberries, thawed',
+    # r'1/4 lemon, juiced (optional)',
 ]
 
 # Global variable that holds the parsed ingredient
@@ -19,6 +21,7 @@ ingredient = None
 
 units = [
     'teaspoon',
+    'tablespoon',
     'cup',
 ]
 
@@ -69,6 +72,11 @@ def t_WORD(t):
     return t
 
 
+def t_PREPNOTE(t):
+    r'[a-zA-Z\-\s,]+'
+    return t
+
+
 def t_error(t):
     print("Illegal character '%s'" % t.value[0])
     t.lexer.skip(1)
@@ -80,7 +88,8 @@ precedence = (
 
 
 def p_ingredient(p):
-    '''ingredient : quantity WHITESPACE WORD
+    '''ingredient : quantity WHITESPACE WORD PREPNOTE
+                  | quantity WHITESPACE WORD
     '''
     global ingredient
     ingredient = p[3]
