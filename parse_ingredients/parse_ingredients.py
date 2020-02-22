@@ -4,13 +4,20 @@ import ply.yacc as yacc
 from ply.lex import TOKEN
 import re
 
-# import spacy
-# nlp = spacy.load("en_core_web_sm")
+
+import spacy
+nlp = spacy.load("en_core_web_sm")
 
 
 def remove_parenthesis(s):
     return re.sub(r" ?\([^)]+\)", "", s)
 
+def get_singular(s):
+    singular = engine.singular_noun(s)
+    if (singular):
+        return singular
+    else:
+        return s
 
 test_ingredients = [
     r"1 1/4 cups all-purpose flour",
@@ -131,6 +138,12 @@ if __name__ == '__main__':
         ingredient = remove_parenthesis(ingredient).strip()
         yacc.parse(ingredient)
         if ingredient:
+
+            doc = nlp(ingredient)
+            for chunk in doc.noun_chunks:
+                if (chunk.root.dep_ == 'ROOT' or chunk.root.dep_== 'dobj'):
+                    ingredient = chunk.root.text
+                    ingredient = get_singular(ingredient)
             print('Got ingredient:', ingredient)
         else:
             print('Parse error')
