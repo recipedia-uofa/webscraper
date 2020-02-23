@@ -74,11 +74,11 @@ class IngredientParser:
 
 
     def t_WORD(self, t):
-        r'[a-zA-Z\-\s\']+'
+        r'[a-zA-Z\-\s\'®]+'
         return t
 
 
-    t_PREPNOTE = r'[a-zA-Z\-\s,]+'
+    t_PREPNOTE = r'[a-zA-Z\-\s,®0-9]+'
 
 
     def t_error(self, t):
@@ -127,6 +127,7 @@ class IngredientParser:
         yacc.parse(s)
 
         if self.ingredient:
+
             doc = IngredientParser.nlp(self.ingredient)
 
             # Attempt to break the ingredient into chunks and return its root
@@ -135,10 +136,11 @@ class IngredientParser:
                     return _get_singular(chunk.root.text)
 
             # Failed to break down to nice chunks
+
             return self.ingredient
 
         else:
-            raise ValueError('Failed to parse:', ingredient)
+            raise ValueError('Failed to parse:', s)
 
         return ingredient
 
@@ -161,6 +163,7 @@ if __name__ == '__main__':
         r"1 pound large shrimp, peeled and deveined",
         r"1 1/2 teaspoons ground cinnamon",
         r"1 dash hot pepper sauce (such as Frank's RedHot®), or to taste",
+        r"2 russet potatoes, scrubbed and cut into eighths",
     ]
 
     parser = IngredientParser()

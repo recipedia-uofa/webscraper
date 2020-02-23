@@ -5,6 +5,8 @@ import re
 import os
 import sys
 import traceback
+sys.path.append('ingredient_parser/')
+from ingredient_parser import IngredientParser
 
 
 class NoNutritionFactsException(Exception):
@@ -62,7 +64,12 @@ def parse_recipe_html(path):
         # Ingredients
         ingredients = list()
         for tag in soup.find_all(itemprop='recipeIngredient'):
-            recipe.ingredients.append(tag.contents[0])
+            ingredient = tag.contents[0]
+            try:
+                ingredient = ingredient_parser.parse(ingredient)
+            except Exception as e:
+                print(e)
+            recipe.ingredients.append(ingredient)
 
         # Rating
         rating_div = soup.findAll('div', {'class': 'recipe-summary__stars'})[0]
@@ -153,6 +160,8 @@ if __name__ == '__main__':
         type=str,
     )
     args = parser.parse_args()
+
+    ingredient_parser = IngredientParser()
 
     total = 0
     success = 0
