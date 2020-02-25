@@ -3,7 +3,6 @@ import ply.lex as lex
 import ply.yacc as yacc
 from ply.lex import TOKEN
 import re
-import spacy
 
 
 def _remove_parenthesis(s):
@@ -29,9 +28,6 @@ class IngredientParser:
 
     # Used to convert between single and plural forms
     engine = inflect.engine()
-
-    # Used for natual language processing
-    nlp = spacy.load("en_core_web_sm")
 
     # Build the regex for matching all units
     for i in range(0, len(units)):
@@ -122,29 +118,17 @@ class IngredientParser:
     def parse(self, s):
         '''Given an input string, attempt to parse and return the ingredient part
         '''
-
         s = _remove_parenthesis(s).strip()
         yacc.parse(s)
 
         if self.ingredient:
-
-            doc = IngredientParser.nlp(self.ingredient)
-
-            # Attempt to break the ingredient into chunks and return its root
-            for chunk in doc.noun_chunks:
-                if (chunk.root.dep_ == 'ROOT' or chunk.root.dep_== 'dobj'):
-                    return _get_singular(chunk.root.text)
-
-            # Failed to break down to nice chunks
-
-            return self.ingredient
-
+            return _get_singular(self.ingredient)
         else:
             raise ValueError('Failed to parse:', s)
 
-        return ingredient
-
 if __name__ == '__main__':
+
+    # TODO: Make them into tests
 
     test_ingredients = [
         r"1 1/4 cups all-purpose flour",
@@ -164,6 +148,14 @@ if __name__ == '__main__':
         r"1 1/2 teaspoons ground cinnamon",
         r"1 dash hot pepper sauce (such as Frank's RedHot®), or to taste",
         r"2 russet potatoes, scrubbed and cut into eighths",
+        # r"8 bars Baby Ruth ™ candy bars, chopped",
+        # r"1 broiler/fryer chicken, cut up and skin removed",
+        # r"salt to taste",
+        # r"salt and pepper to taste",
+        # r"ground black pepper to taste",
+        # r"1 (8 ounce) can water chestnuts ",
+        # r"1 cup candied cherries",
+        # r"2/3 cup canned pumpkin",
     ]
 
     parser = IngredientParser()
