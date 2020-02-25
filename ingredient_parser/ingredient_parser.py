@@ -3,10 +3,15 @@ import ply.lex as lex
 import ply.yacc as yacc
 from ply.lex import TOKEN
 import re
+import os
+
+
+INGREDIENTS_DIR = 'ingredients'
 
 
 def _remove_parenthesis(s):
     return re.sub(r" ?\([^)]+\)", "", s)
+
 
 def _get_singular(s):
     singular = IngredientParser.engine.singular_noun(s)
@@ -14,6 +19,24 @@ def _get_singular(s):
         return singular
     else:
         return s
+
+
+def load_ingredients(dir):
+    '''Given a directory, load all ingredients under that directory and return
+    an ingredient dictionary that maps ingredients to its category.
+    '''
+
+    ingredients_dict = dict()
+
+    for (root, dirs, files) in os.walk(dir, topdown=True):
+        print(root, dirs, files)
+        for file in files:
+            with open(os.path.join(root, file), 'r') as f:
+                for ingredient in f:
+                    ingredients_dict[ingredient.strip()] = file
+
+    return ingredients_dict
+
 
 class IngredientParser:
 
@@ -48,39 +71,31 @@ class IngredientParser:
         'WHITESPACE'
     )
 
-
     @TOKEN(units_pattern)
     def t_UNIT(self, t):
         return t
-
 
     def t_FRACTION(self, t):
         r'(?:[0-9]+\s)?[1-9]\/[1-9]'
         return t
 
-
     def t_NUMBER(self, t):
         r'[1-9][0-9]*'
         return t
-
 
     def t_WHITESPACE(self, t):
         r'\s+'
         return t
 
-
     def t_WORD(self, t):
         r'[a-zA-Z\-\s\'®]+'
         return t
 
-
     t_PREPNOTE = r'[a-zA-Z\-\s,®0-9]+'
-
 
     def t_error(self, t):
         print("Illegal character '%s'" % t.value[0])
         t.lexer.skip(1)
-
 
     def p_ingredient(self, p):
         '''ingredient : FRACTION WHITESPACE UNIT WHITESPACE WORD
@@ -98,7 +113,6 @@ class IngredientParser:
         elif (len(p) == 3):
             p[0] = p[1]
             self.ingredient = p[1]
-
 
     def p_error(self, p):
         self.ingredient = None
@@ -125,6 +139,7 @@ class IngredientParser:
             return _get_singular(self.ingredient)
         else:
             raise ValueError('Failed to parse:', s)
+
 
 if __name__ == '__main__':
 
