@@ -4,9 +4,11 @@ import ply.yacc as yacc
 from ply.lex import TOKEN
 import re
 import os
+from fuzzywuzzy import fuzz
 
 
-INGREDIENTS_DIR = 'ingredients'
+INGREDIENTS_DIR = os.path.join(os.path.dirname(
+    os.path.abspath(__file__)), 'ingredients')
 
 
 def _remove_parenthesis(s):
@@ -29,13 +31,32 @@ def load_ingredients(dir):
     ingredients_dict = dict()
 
     for (root, dirs, files) in os.walk(dir, topdown=True):
-        print(root, dirs, files)
         for file in files:
             with open(os.path.join(root, file), 'r') as f:
                 for ingredient in f:
                     ingredients_dict[ingredient.strip()] = file
 
     return ingredients_dict
+
+
+def find_closest_match(ingredient, ingredients):
+    '''Find the closest ingredient in a dictionary of ingredients
+    that matches the given ingredient
+    '''
+    highest_score = float('-inf')
+    closest_match = None
+
+    for simple_ingredient in ingredients.keys():
+
+        score = fuzz.ratio(ingredient, simple_ingredient)
+        score += len(set(ingredient.split()) &
+                     set(simple_ingredient.split())) * 100
+
+        if score > highest_score:
+            highest_score = score
+            closest_match = simple_ingredient
+
+    return closest_match
 
 
 class IngredientParser:
@@ -124,6 +145,7 @@ class IngredientParser:
     def __init__(self):
 
         self.ingredient = None  # Variable to hold the parsed ingredient
+        self.ingredients = load_ingredients(INGREDIENTS_DIR)
 
         # Build the lexer and parser
         lex.lex(module=self)
@@ -136,7 +158,8 @@ class IngredientParser:
         yacc.parse(s)
 
         if self.ingredient:
-            return _get_singular(self.ingredient)
+            singular_ingredient = _get_singular(self.ingredient)
+            return find_closest_match(singular_ingredient, self.ingredients)
         else:
             raise ValueError('Failed to parse:', s)
 

@@ -62,14 +62,13 @@ def parse_recipe_html(path):
         recipe.name = soup.find(id='recipe-main-content').text
 
         # Ingredients
-        ingredients = list()
         for tag in soup.find_all(itemprop='recipeIngredient'):
             ingredient = tag.contents[0]
             try:
                 ingredient = ingredient_parser.parse(ingredient)
+                recipe.ingredients.append(ingredient)
             except Exception as e:
                 print(e)
-            recipe.ingredients.append(ingredient)
 
         # Rating
         rating_div = soup.findAll('div', {'class': 'recipe-summary__stars'})[0]
@@ -179,6 +178,7 @@ if __name__ == '__main__':
                         sys.exit()
                     except NoNutritionFactsException:
                         print('No nutrition facts for {}'.format(file))
-                    except:
+                    except Exception as e:
                         print('Failed', file)
+                        # print(traceback.format_exc())
     print('{}/{} succeeded!'.format(success, total))
