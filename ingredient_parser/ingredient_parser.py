@@ -111,9 +111,9 @@ def load_ingredients(dir):
 
     ingredients_dict = dict()
 
-    for (root, dirs, files) in os.walk(dir, topdown=True):
-        for file in files:
-            with open(os.path.join(root, file), 'r') as f:
+    for file in os.listdir(dir):
+        if file not in ['.pytest_cache']:
+            with open(os.path.join(dir, file), 'r') as f:
                 for ingredient in f:
                     ingredients_dict[ingredient.strip()] = file
 
