@@ -5,10 +5,15 @@ from ply.lex import TOKEN
 import re
 import os
 from fuzzywuzzy import fuzz
+import string
+from scipy.special import softmax
+import spacy
 
-
+nlp = spacy.load("en_core_web_sm")
 INGREDIENTS_DIR = os.path.join(os.path.dirname(
     os.path.abspath(__file__)), 'ingredients')
+THRESHOLD = 80
+separators = r'[{}]'.format(string.punctuation + r'\s')
 
 
 def _remove_parenthesis(s):
@@ -21,6 +26,82 @@ def _get_singular(s):
         return singular
     else:
         return s
+
+
+def split(s, separators):
+    '''Split s with a string of separators (e.g ",.-")
+    '''
+    sep = r'[{}]'.format(separators)
+    return re.split(sep, s)
+
+
+def threshold_ratio(s1, s2, threshold):
+    '''Perform fuzz.ratio on s1 and s2 but return 0 if the ratio
+    is lower than threshold
+    '''
+    ratio = fuzz.ratio(s1, s2)
+    if ratio < threshold:
+        return 0
+    else:
+        return ratio
+
+
+def get_score(expression, fixed_ingredient):
+    '''Get a score between expression and fixed_ingredient by comparing how
+    similar they are.
+    '''
+
+    score = 0
+
+    expression = split(expression, string.punctuation + r'\s')
+    expression.reverse()
+    expression_len = len(expression)
+
+    fixed_ingredient = split(fixed_ingredient, string.punctuation + r'\s')
+    fixed_ingredient.reverse()
+    fixed_ingredient_len = len(fixed_ingredient)
+
+    matched = 0
+
+    expression_copy = list(expression)
+
+    # Using softmax so the weights add up to 1
+    # Reversed so it is more heavily weighted towards the end of the string
+    weight = list(range(fixed_ingredient_len))
+    weight.reverse()
+    weight = softmax(weight)
+
+    for i in range(0, len(fixed_ingredient)):
+        local_highest_score = float('-inf')
+        local_highest_idx = 0
+        if len(expression_copy) > 0:
+            for j in range(0, len(expression_copy)):
+                ratio = threshold_ratio(
+                    fixed_ingredient[i], expression_copy[j], THRESHOLD)
+                if ratio > local_highest_score:
+                    local_highest_score = ratio
+                    local_highest_idx = j
+            score += weight[i] * local_highest_score
+            if local_highest_score > 0:
+                matched += 2
+            expression_copy.pop(local_highest_idx)
+
+    matching_modifier = float(
+        matched) / float(expression_len + fixed_ingredient_len)
+    return score * matching_modifier
+
+
+def remove_adopositions(s, nlp):
+    '''Given a string s and the spacy nlp engine, return a string without adpositions.
+    For example, "shrimp in shell" -> "shrimp".
+    '''
+    doc = nlp(s)
+    indices_to_remove = []
+    for token in doc:
+        if token.pos_ == 'ADP':
+            for tok in token.subtree:
+                indices_to_remove.append(tok.i)
+    return ' '.join([token.text for token in doc if token.i not in indices_to_remove])
 
 
 def load_ingredients(dir):
@@ -39,22 +120,20 @@ def load_ingredients(dir):
     return ingredients_dict
 
 
-def find_closest_match(ingredient, ingredients):
+def find_closest_match(expression, ingredients):
     '''Find the closest ingredient in a dictionary of ingredients
-    that matches the given ingredient
+    that matches the given expression
     '''
     highest_score = float('-inf')
     closest_match = None
 
-    for simple_ingredient in ingredients.keys():
+    for fixed_ingredient in ingredients.keys():
 
-        score = fuzz.ratio(ingredient, simple_ingredient)
-        score += len(set(ingredient.split()) &
-                     set(simple_ingredient.split())) * 100
+        score = get_score(expression, fixed_ingredient)
 
         if score > highest_score:
             highest_score = score
-            closest_match = simple_ingredient
+            closest_match = fixed_ingredient
 
     return closest_match
 
@@ -155,6 +234,7 @@ class IngredientParser:
         '''Given an input string, attempt to parse and return the ingredient part
         '''
         s = _remove_parenthesis(s).strip()
+        s = remove_adopositions(s, nlp)
         yacc.parse(s)
 
         if self.ingredient:
@@ -165,8 +245,6 @@ class IngredientParser:
 
 
 if __name__ == '__main__':
-
-    # TODO: Make them into tests
 
     test_ingredients = [
         r"1 1/4 cups all-purpose flour",
