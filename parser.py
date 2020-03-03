@@ -7,6 +7,7 @@ import sys
 import traceback
 sys.path.append('ingredient_parser/')
 from ingredient_parser import IngredientParser
+from ingredient_parser import load_ingredients, INGREDIENTS_DIR
 
 
 class NoNutritionFactsException(Exception):
@@ -19,6 +20,7 @@ class Recipe:
     separator = '|'  # used to separate ingredients
 
     def __init__(self):
+        self.id = 0
         self.url = ''
         self.name = ''
         self.rating = 0
@@ -34,27 +36,52 @@ class Recipe:
         self.sodium = 0  # mg/serving
 
     def __str__(self):
-        return ','.join([
-            '\"{}\"'.format(self.url),
-            '\"{}\"'.format(self.name),
-            '\"{}\"'.format(str(self.rating)),
-            '\"{}\"'.format(Recipe.separator.join(self.ingredients)),
-            '\"{}\"'.format(self.img_url),
-            '\"{}\"'.format(str(self.servings)),
-            '\"{}\"'.format(str(self.prep_time)),
-            '\"{}\"'.format(str(self.calories)),
-            '\"{}\"'.format(str(self.fat)),
-            '\"{}\"'.format(str(self.carbohydrates)),
-            '\"{}\"'.format(str(self.protein)),
-            '\"{}\"'.format(str(self.cholesterol)),
-            '\"{}\"'.format(str(self.sodium)),
-        ])
+
+        lines = []
+        lines.append('_:{} <xid> \"{}\" .'.format(self.id, self.url))
+        lines.append('_:{} <dgraph.type> \"Recipe\" .'.format(self.id))
+        lines.append('_:{} <name> \"{}\" .'.format(self.id, self.name))
+        lines.append('_:{} <rating> \"{}\" .'.format(self.id, self.rating))
+
+        for ingredient in self.ingredients:
+            lines.append('_:{} <contains> _:{} .'.format(self.id, ingredient.replace(' ', '_')))
+        return '\n'.join(lines)
+
+        # TODO: consider just dump out a csv file at this point
+        # return ','.join([
+        #     '\"{}\"'.format(self.url),
+        #     '\"{}\"'.format(self.name),
+        #     '\"{}\"'.format(str(self.rating)),
+        #     '\"{}\"'.format(Recipe.separator.join(self.ingredients)),
+        #     '\"{}\"'.format(self.img_url),
+        #     '\"{}\"'.format(str(self.servings)),
+        #     '\"{}\"'.format(str(self.prep_time)),
+        #     '\"{}\"'.format(str(self.calories)),
+        #     '\"{}\"'.format(str(self.fat)),
+        #     '\"{}\"'.format(str(self.carbohydrates)),
+        #     '\"{}\"'.format(str(self.protein)),
+        #     '\"{}\"'.format(str(self.cholesterol)),
+        #     '\"{}\"'.format(str(self.sodium)),
+        # ])
+
+def output_database_ingredients():
+
+    ingredients = load_ingredients(INGREDIENTS_DIR)
+    with open(args.output, 'w') as f:
+
+        for ingredient in ingredients.keys():
+            f.write('_:{} <xid> \"{}\" .\n'.format(ingredient.replace(' ', '_'), ingredient))
+            f.write('_:{} <dgraph.type> \"Ingredient\" .\n'.format(ingredient.replace(' ', '_')))
 
 
 def parse_recipe_html(path):
     '''Given a path to the html file, return a parsed recipe object
     '''
+    # print('path', path.split('/')[-1].replace('.html', ''))
+
     recipe = Recipe()
+
+    recipe.id = int(path.split('/')[-1].replace('.html', ''))
     with codecs.open(path, 'r', 'utf-8') as f:
         soup = BeautifulSoup(f.read(), features='html5lib')
 
@@ -155,16 +182,18 @@ if __name__ == '__main__':
         '--output',
         dest='output',
         help='path to the output file',
-        default='data.csv',
+        default='data.rdf',
         type=str,
     )
     args = parser.parse_args()
+
+    output_database_ingredients()
 
     ingredient_parser = IngredientParser()
 
     total = 0
     success = 0
-    with open(args.output, 'w') as f:
+    with open(args.output, 'a') as f:
         for (root, dirs, files) in os.walk(args.path, topdown=True):
             for file in files:
                 if file.endswith('.html'):
