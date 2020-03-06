@@ -24,6 +24,7 @@ class Recipe:
         self.url = ''
         self.name = ''
         self.rating = 0
+        self.reviews = 0
         self.ingredients = list()
         self.img_url = ''
         self.servings = 0
@@ -103,6 +104,11 @@ def parse_recipe_html(path):
         result = re.search(
             r'Rated as (\d+(?:\.\d{1,2})?) out of 5 Stars', rating_string)
         recipe.rating = float(result.groups(1)[0])
+
+        # Reviews
+        reviews_str = soup.find(
+            'span', {'class': 'review-count'}).text
+        recipe.reviews = int(re.search(r'(\d+) review(?:s)?', reviews_str).groups(1)[0])
 
         # Image URL
         recipe.img_url = soup.find('img', {'class': 'rec-photo'})['src']
