@@ -25,6 +25,7 @@ class Recipe:
         self.name = ''
         self.rating = 0
         self.reviews = 0
+        self.made_it_count = 0
         self.ingredients = list()
         self.img_url = ''
         self.servings = 0
@@ -108,7 +109,25 @@ def parse_recipe_html(path):
         # Reviews
         reviews_str = soup.find(
             'span', {'class': 'review-count'}).text
-        recipe.reviews = int(re.search(r'(\d+) review(?:s)?', reviews_str).groups(1)[0])
+        match = re.search(r'(\d+) review(?:s)?', reviews_str)
+        if match:
+            recipe.made_it_count = int(match.groups(1)[0])
+            recipe.reviews = int(match.groups(1)[0])
+        else:
+            match = re.search(r'(\d)k review(?:s)?', reviews_str)
+            recipe.reviews = int(match.groups(1)[0]) * 1000
+
+        # Made it count
+        made_it_count_span = soup.find(
+            'span', {'class': 'made-it-count'})
+        # The count is located in the next sibling of the span with class 'made-it-count'
+        made_it_count_str = made_it_count_span.find_next_sibling().text
+        match = re.search(r'(\d+).made it', made_it_count_str)
+        if match:
+            recipe.made_it_count = int(match.groups(1)[0])
+        else:
+            match = re.search(r'(\d)k.made it', made_it_count_str)
+            recipe.made_it_count = int(match.groups(1)[0]) * 1000
 
         # Image URL
         recipe.img_url = soup.find('img', {'class': 'rec-photo'})['src']
