@@ -44,6 +44,13 @@ class Recipe:
         lines.append('_:{} <dgraph.type> \"Recipe\" .'.format(self.id))
         lines.append('_:{} <name> \"{}\" .'.format(self.id, self.name))
         lines.append('_:{} <rating> \"{}\" .'.format(self.id, self.rating))
+        lines.append('_:{} <calories> \"{}\" .'.format(self.id, self.calories))
+        lines.append('_:{} <fat> \"{}\" .'.format(self.id, self.fat))
+        lines.append('_:{} <carbs> \"{}\" .'.format(self.id, self.carbohydrates))
+        lines.append('_:{} <protein> \"{}\" .'.format(self.id, self.protein))
+        lines.append('_:{} <cholesterol> \"{}\" .'.format(self.id, self.cholesterol))
+        lines.append('_:{} <sodium> \"{}\" .'.format(self.id, self.sodium))
+        lines.append('_:{} <servings> \"{}\" .'.format(self.id, self.servings))
 
         for ingredient in self.ingredients:
             lines.append('_:{} <contains> _:{} .'.format(self.id, ingredient.replace(' ', '_')))
