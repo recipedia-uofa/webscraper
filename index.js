@@ -50,6 +50,9 @@ function sleep(ms) {
 
 async function download_recipe(page, recipeId) {
   await page.goto(recipeBaseUrl + recipeId.toString(), {waitUntil: 'networkidle2'});
+  const element = await page.$('a[class="see-full-nutrition"]')
+  await element.click()
+  await page.waitForSelector(".nutrient-value");
   const html = await page.content();
   fs.writeFile(downloadPath + '/' + recipeId + '.html', html, () => {
     console.log(recipeId + ' saved!');
