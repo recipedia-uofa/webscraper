@@ -30,27 +30,22 @@ class Recipe:
         self.img_url = ''
         self.servings = 0
         self.prep_time = 0
+        self.nutrition_facts = {}
         self.calories = 0  # calories/serving
-        self.fat = 0  # g/serving
-        self.carbohydrates = 0  # g/serving
-        self.protein = 0  # g/serving
-        self.cholesterol = 0  # mg/serving
-        self.sodium = 0  # mg/serving
 
     def __str__(self):
 
         lines = []
+
         lines.append('_:{} <xid> \"{}\" .'.format(self.id, self.url))
         lines.append('_:{} <dgraph.type> \"Recipe\" .'.format(self.id))
         lines.append('_:{} <name> \"{}\" .'.format(self.id, self.name))
         lines.append('_:{} <rating> \"{}\" .'.format(self.id, self.rating))
         lines.append('_:{} <calories> \"{}\" .'.format(self.id, self.calories))
-        lines.append('_:{} <fat> \"{}\" .'.format(self.id, self.fat))
-        lines.append('_:{} <carbs> \"{}\" .'.format(self.id, self.carbohydrates))
-        lines.append('_:{} <protein> \"{}\" .'.format(self.id, self.protein))
-        lines.append('_:{} <cholesterol> \"{}\" .'.format(self.id, self.cholesterol))
-        lines.append('_:{} <sodium> \"{}\" .'.format(self.id, self.sodium))
         lines.append('_:{} <servings> \"{}\" .'.format(self.id, self.servings))
+
+        for nutrient, quantity in self.nutrition_facts.items():
+            lines.append('_:{} <{}> \"{}\" .'.format(self.id, nutrient, quantity))
 
         for ingredient in self.ingredients:
             lines.append('_:{} <contains> _:{} .'.format(self.id, ingredient.replace(' ', '_')))
@@ -164,35 +159,13 @@ def parse_recipe_html(path):
             recipe.prep_time = 0
 
         try:
-            # Nutrition Facts
-            recipe.calories = int(
-                re.search(
-                    r'(\d+) calories',
-                    soup.find('span', {'itemprop': 'calories'}).text
-                ).group(1)
-            )
-
-            recipe.fat = float(
-                soup.find('span', {'itemprop': 'fatContent'}).text)
-
-            recipe.carbohydrates = float(
-                soup.find('span', {'itemprop': 'carbohydrateContent'}).text)
-
-            recipe.protein = float(
-                soup.find('span', {'itemprop': 'proteinContent'}).text)
-
-            cholesterol_str = soup.find(
-                'span', {'itemprop': 'cholesterolContent'}).text
-            if (cholesterol_str == '< 1 '):
-                recipe.cholesterol = 0
-            else:
-                recipe.cholesterol = float(cholesterol_str)
-
-            sodium_str = soup.find('span', {'itemprop': 'sodiumContent'}).text
-            if (sodium_str == '< 1 '):
-                recipe.sodium = 0
-            else:
-                recipe.sodium = float(sodium_str)
+            for row in soup.find_all('div', {'class': 'nutrition-row'}):
+                row = row.find('span', {'class': 'nutrient-name'})
+                name, quantity = row.text.split(':')
+                name = name.lower().replace(' ', '_')
+                quantity.strip()
+                quantity = re.search(u'(?P<quantity>[\d.]+).*', quantity).group('quantity')
+                recipe.nutrition_facts[name] = quantity
         except:
             raise(NoNutritionFactsException)
 
