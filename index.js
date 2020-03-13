@@ -51,6 +51,10 @@ function sleep(ms) {
 async function download_recipe(page, recipeId) {
   await page.goto(recipeBaseUrl + recipeId.toString(), {waitUntil: 'networkidle2'});
   const element = await page.$('a[class="see-full-nutrition"]')
+  if (element == null) {
+    console.log(`skip: recipe ${recipeId} don't have a nutrition button`)
+    return
+  }
   await element.click()
   await page.waitForSelector(".nutrient-value");
   const html = await page.content();
