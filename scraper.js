@@ -33,7 +33,8 @@ parser.addArgument(
 );
 var args = parser.parseArgs();
 
-const maxRetry = 10;
+const maxRetry = 3;
+const maxConsecutiveFailures = 3;
 const sleepTime = 1000; // 1s
 
 if (!fs.existsSync(downloadBasePath)){
@@ -76,21 +77,35 @@ async function download_recipe(page, recipeId) {
       request.continue();
   });
 
+  let consecutiveFailrues = 0;
+
   for (let recipeId = args.startId; recipeId <= args.endId; recipeId++) {
     for (let attempt = 0; attempt < maxRetry; attempt++) {
       try {
         await sleep(Math.floor(sleepTime + Math.random() * 1000));
         await download_recipe(page, recipeId);
+        consecutiveFailrues = 0;
         break; // succeeds, go to the next recipeId
       } catch(err) {
         console.log(`Failed for recipeId=${recipeId} for attempt=${attempt}`);
         console.log(err);
         if (attempt == maxRetry - 1) {
-          await browser.close();
-          return;
+          consecutiveFailrues++;
+          if (consecutiveFailrues >= maxConsecutiveFailures) {
+            // Failed for a recipe on the last attempt, and the number of
+            // consecutive failures have reached the maximum. Abort.
+            console.log(`Failed ${consecutiveFailrues} recipes consecutively. Abort.`);
+            await browser.close();
+            return;
+          }
+          else {
+            // Failed for a recipe on the last attempt, go to the next recipe
+            break;
+          }
         }
         else {
-          continue;
+            // Failed for a recipe, try that recipe again
+            continue;
         }
       }
     }
