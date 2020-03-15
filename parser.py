@@ -159,6 +159,12 @@ def parse_recipe_html(path):
             recipe.prep_time = 0
 
         try:
+            recipe.calories = int(
+                re.search(
+                    r'(\d+) calories',
+                    soup.find('span', {'itemprop': 'calories'}).text
+                ).group(1)
+            )
             for row in soup.find_all('div', {'class': 'nutrition-row'}):
                 row = row.find('span', {'class': 'nutrient-name'})
                 name, quantity = row.text.split(':')
