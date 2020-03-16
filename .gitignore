@@ -1,4 +1,5 @@
 /node_modules
 /download
-data.csv
-data.rdf
+htmls.csv
+recipedia.rdf
+*.ipynb

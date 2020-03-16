@@ -5,9 +5,7 @@ import re
 import os
 import sys
 import traceback
-sys.path.append('ingredient_parser/')
-from ingredient_parser import IngredientParser
-from ingredient_parser import load_ingredients, INGREDIENTS_DIR
+import csv
 
 
 class NoNutritionFactsException(Exception):
@@ -34,54 +32,11 @@ class Recipe:
         self.calories = 0  # calories/serving
 
     def __str__(self):
-
-        lines = []
-
-        lines.append('_:{} <xid> \"{}\" .'.format(self.id, self.url))
-        lines.append('_:{} <dgraph.type> \"Recipe\" .'.format(self.id))
-        lines.append('_:{} <name> \"{}\" .'.format(self.id, self.name))
-        lines.append('_:{} <rating> \"{}\" .'.format(self.id, self.rating))
-        lines.append('_:{} <calories> \"{}\" .'.format(self.id, self.calories))
-        lines.append('_:{} <servings> \"{}\" .'.format(self.id, self.servings))
-
-        for nutrient, quantity in self.nutrition_facts.items():
-            lines.append('_:{} <{}> \"{}\" .'.format(self.id, nutrient, quantity))
-
-        for ingredient in self.ingredients:
-            lines.append('_:{} <contains> _:{} .'.format(self.id, ingredient.replace(' ', '_')))
-        return '\n'.join(lines)
-
-        # TODO: consider just dump out a csv file at this point
-        # return ','.join([
-        #     '\"{}\"'.format(self.url),
-        #     '\"{}\"'.format(self.name),
-        #     '\"{}\"'.format(str(self.rating)),
-        #     '\"{}\"'.format(Recipe.separator.join(self.ingredients)),
-        #     '\"{}\"'.format(self.img_url),
-        #     '\"{}\"'.format(str(self.servings)),
-        #     '\"{}\"'.format(str(self.prep_time)),
-        #     '\"{}\"'.format(str(self.calories)),
-        #     '\"{}\"'.format(str(self.fat)),
-        #     '\"{}\"'.format(str(self.carbohydrates)),
-        #     '\"{}\"'.format(str(self.protein)),
-        #     '\"{}\"'.format(str(self.cholesterol)),
-        #     '\"{}\"'.format(str(self.sodium)),
-        # ])
-
-def output_database_ingredients():
-
-    ingredients = load_ingredients(INGREDIENTS_DIR)
-    with open(args.output, 'w') as f:
-
-        for ingredient in ingredients.keys():
-            f.write('_:{} <xid> \"{}\" .\n'.format(ingredient.replace(' ', '_'), ingredient))
-            f.write('_:{} <dgraph.type> \"Ingredient\" .\n'.format(ingredient.replace(' ', '_')))
-
+        return self.url
 
 def parse_recipe_html(path):
     '''Given a path to the html file, return a parsed recipe object
     '''
-    # print('path', path.split('/')[-1].replace('.html', ''))
 
     recipe = Recipe()
 
@@ -94,12 +49,7 @@ def parse_recipe_html(path):
 
         # Ingredients
         for tag in soup.find_all(itemprop='recipeIngredient'):
-            ingredient = tag.contents[0]
-            try:
-                ingredient = ingredient_parser.parse(ingredient)
-                recipe.ingredients.append(ingredient)
-            except Exception as e:
-                print(e)
+            recipe.ingredients.append(tag.contents[0])
 
         # Rating
         rating_div = soup.findAll('div', {'class': 'recipe-summary__stars'})[0]
@@ -171,7 +121,7 @@ def parse_recipe_html(path):
                 name = name.lower().replace(' ', '_')
                 quantity.strip()
                 quantity = re.search(u'(?P<quantity>[\d.]+).*', quantity).group('quantity')
-                recipe.nutrition_facts[name] = quantity
+                recipe.nutrition_facts[name] = float(quantity)
         except:
             raise(NoNutritionFactsException)
 
@@ -193,26 +143,54 @@ if __name__ == '__main__':
         '--output',
         dest='output',
         help='path to the output file',
-        default='data.rdf',
+        default='htmls.csv',
         type=str,
     )
     args = parser.parse_args()
 
-    output_database_ingredients()
-
-    ingredient_parser = IngredientParser()
-
     total = 0
     success = 0
     with open(args.output, 'a') as f:
+        writer = csv.writer(f, delimiter=',', quoting=csv.QUOTE_ALL)
         for (root, dirs, files) in os.walk(args.path, topdown=True):
             for file in files:
                 if file.endswith('.html'):
                     try:
                         total = total + 1
                         f_html = os.path.join(root, file)
-                        line = str(parse_recipe_html(f_html)) + '\n'
-                        f.write(line)
+                        recipe = parse_recipe_html(f_html)
+                        row = [
+                            recipe.id,
+                            recipe.url,
+                            recipe.name,
+                            recipe.img_url,
+                            recipe.servings,
+                            recipe.prep_time,
+                            recipe.rating,
+                            recipe.reviews,
+                            recipe.made_it_count,
+                            recipe.calories,
+                            recipe.nutrition_facts['total_fat'],
+                            recipe.nutrition_facts['saturated_fat'],
+                            recipe.nutrition_facts['cholesterol'],
+                            recipe.nutrition_facts['sodium'],
+                            recipe.nutrition_facts['potassium'],
+                            recipe.nutrition_facts['total_carbohydrates'],
+                            recipe.nutrition_facts['dietary_fiber'],
+                            recipe.nutrition_facts['protein'],
+                            recipe.nutrition_facts['sugars'],
+                            recipe.nutrition_facts['vitamin_a'],
+                            recipe.nutrition_facts['vitamin_c'],
+                            recipe.nutrition_facts['calcium'],
+                            recipe.nutrition_facts['iron'],
+                            recipe.nutrition_facts['thiamin'],
+                            recipe.nutrition_facts['niacin'],
+                            recipe.nutrition_facts['vitamin_b6'],
+                            recipe.nutrition_facts['magnesium'],
+                            recipe.nutrition_facts['folate'],
+                        ]
+                        row += recipe.ingredients
+                        writer.writerow(row)
                         success = success + 1
                     except KeyboardInterrupt:
                         sys.exit()
