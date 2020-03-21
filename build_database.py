@@ -96,7 +96,7 @@ class DatabaseBuilder():
         self.build_database_ingredients(self.f_output, self.ingredients)
 
         for row in reader:
-            # row[i] = row[i].replace(r'"', r'\"')
+            row = [col.replace(r'"', r'\"') for col in row]
             self.parse_csv_row(row)
 
 
