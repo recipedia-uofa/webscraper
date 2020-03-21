@@ -3,3 +3,4 @@
 htmls.csv
 recipedia.rdf
 *.ipynb
+*.pyc
