@@ -89,11 +89,13 @@ class DatabaseBuilder():
                 except Exception as e:
                     print(e)
 
-    def build(self):
+    def build(self, build_ingredients = True):
 
         reader = csv.reader(self.f_input,  delimiter=',',
                             quoting=csv.QUOTE_ALL)
-        self.build_database_ingredients(self.f_output, self.ingredients)
+
+        if build_ingredients:
+            self.build_database_ingredients(self.f_output, self.ingredients)
 
         for row in reader:
             row = [col.replace(r'"', r'\"') for col in row]
