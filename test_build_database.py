@@ -4,7 +4,7 @@ from build_database import DatabaseBuilder
 from unittest.mock import Mock
 import csv
 
-TEST_FILE = 'test_build_database.csv'
+TEST_QUOTATION_MARK_CSV = 'build_database_test_files/test_quotation_mark.csv'
 
 
 class MockFileObject:
@@ -18,7 +18,7 @@ class TestClass:
         f_output = MockFileObject
         f_output.write = Mock()
 
-        with open(TEST_FILE, 'r') as f_input:
+        with open(TEST_QUOTATION_MARK_CSV, 'r') as f_input:
             builder = DatabaseBuilder(f_input, f_output)
             builder.build()
 
