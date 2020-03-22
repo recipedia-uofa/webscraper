@@ -76,6 +76,13 @@ class DatabaseBuilder():
         to the File Object.
         '''
         id = row[0]
+        url_id = row[1].split(r'/')[-3]
+
+        # if the id from the filename does not match the id of the url, redirection
+        # has happened, and the row should be skipped to prevent duplicate entries.
+        if id != url_id:
+            return
+
         for i in range(1, len(row)):
             if (i < len(DatabaseBuilder.CSV_INDEX_TO_RELATIONSHIP)):
                 self.f_output.write('_:{} <{}> \"{}\" .\n'.format(
