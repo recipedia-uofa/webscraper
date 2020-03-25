@@ -91,8 +91,9 @@ class DatabaseBuilder():
                 try:
                     raw_ingredient = row[i]
                     ingredient = self.ingredient_parser.parse(raw_ingredient)
-                    self.f_output.write('_:{} <contains> _:{} .\n'.format(
-                        id, ingredient.replace(' ', '_')))
+                    if ingredient:
+                        self.f_output.write('_:{} <contains> _:{} .\n'.format(
+                            id, ingredient.replace(' ', '_')))
                 except Exception as e:
                     print(e)
 

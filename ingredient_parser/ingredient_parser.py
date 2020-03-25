@@ -149,6 +149,11 @@ class IngredientParser:
         'dash',
     ]
 
+    INGREDIENTS_TO_IGNORE = [
+        'salt',
+        'water',
+    ]
+
     # Used to convert between single and plural forms
     engine = inflect.engine()
 
@@ -239,6 +244,10 @@ class IngredientParser:
         '''
 
         self.ingredients_parsed += 1
+
+        for ignored_ingredient in IngredientParser.INGREDIENTS_TO_IGNORE:
+            if ignored_ingredient in s:
+                return None
 
         s = _remove_parenthesis(s).strip()
         s = remove_adopositions(s, nlp)
