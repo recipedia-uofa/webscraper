@@ -226,6 +226,10 @@ class IngredientParser:
         self.ingredient = None  # Variable to hold the parsed ingredient
         self.ingredients = load_ingredients(INGREDIENTS_DIR)
 
+        # stats
+        self.ingredients_parsed = 0
+        self.quantity_parse_errors = 0
+
         # Build the lexer and parser
         lex.lex(module=self)
         yacc.yacc(module=self)
@@ -233,6 +237,9 @@ class IngredientParser:
     def parse(self, s):
         '''Given an input string, attempt to parse and return the ingredient part
         '''
+
+        self.ingredients_parsed += 1
+
         s = _remove_parenthesis(s).strip()
         s = remove_adopositions(s, nlp)
         yacc.parse(s)
@@ -241,6 +248,7 @@ class IngredientParser:
             singular_ingredient = _get_singular(self.ingredient)
             return find_closest_match(singular_ingredient, self.ingredients)
         else:
+            self.quantity_parse_errors += 1
             raise ValueError('Failed to parse:', s)
 
 
