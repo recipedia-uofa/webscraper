@@ -59,5 +59,19 @@ if __name__ == '__main__':
                         pass
             line_number += 1
 
+    print()
     print('Average number of ingredients per recipe: {}'.format(total_ingredients / args.number))
-    print('Success rate for quantity parsing:', float(ingredient_parser.ingredients_parsed - ingredient_parser.quantity_parse_errors) / float(ingredient_parser.ingredients_parsed))
+
+    num_ingredients_parsed = ingredient_parser.num_ingredients_parsed
+    quantity_parse_errors = ingredient_parser.quantity_parse_errors
+    num_quantity_parse_errors = sum(quantity_parse_errors.values())
+
+    print()
+    print('Success rate for quantity parsing:',
+        float(num_ingredients_parsed - num_quantity_parse_errors) / float(num_ingredients_parsed))
+
+    print()
+    print('Top quantity failures:')
+
+    for expression, num_failures in quantity_parse_errors.most_common(10):
+        print('[{}] failed [{}] times'.format(expression, num_failures))

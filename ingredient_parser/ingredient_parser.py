@@ -8,6 +8,7 @@ from fuzzywuzzy import fuzz
 import string
 from scipy.special import softmax
 import spacy
+import collections
 
 nlp = spacy.load("en_core_web_sm")
 INGREDIENTS_DIR = os.path.join(os.path.dirname(
@@ -193,7 +194,7 @@ class IngredientParser:
         return t
 
     def t_WORD(self, t):
-        r'[a-zA-Z\-\s\'®]+'
+        r'[^0-9]+'
         return t
 
     t_PREPNOTE = r'[a-zA-Z\-\s,®0-9]+'
@@ -232,8 +233,8 @@ class IngredientParser:
         self.ingredients = load_ingredients(INGREDIENTS_DIR)
 
         # stats
-        self.ingredients_parsed = 0
-        self.quantity_parse_errors = 0
+        self.num_ingredients_parsed = 0
+        self.quantity_parse_errors = collections.Counter()
 
         # Build the lexer and parser
         lex.lex(module=self)
@@ -243,7 +244,7 @@ class IngredientParser:
         '''Given an input string, attempt to parse and return the ingredient part
         '''
 
-        self.ingredients_parsed += 1
+        self.num_ingredients_parsed += 1
 
         for ignored_ingredient in IngredientParser.INGREDIENTS_TO_IGNORE:
             if ignored_ingredient in s:
@@ -257,7 +258,7 @@ class IngredientParser:
             singular_ingredient = _get_singular(self.ingredient)
             return find_closest_match(singular_ingredient, self.ingredients)
         else:
-            self.quantity_parse_errors += 1
+            self.quantity_parse_errors[s] += 1
             raise ValueError('Failed to parse:', s)
 
 
