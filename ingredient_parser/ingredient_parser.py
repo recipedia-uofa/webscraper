@@ -152,7 +152,10 @@ class IngredientParser:
 
     INGREDIENTS_TO_IGNORE = [
         'salt',
+        'black pepper',
         'water',
+        'skewers',
+        'coloring',
     ]
 
     # Used to convert between single and plural forms
@@ -194,10 +197,10 @@ class IngredientParser:
         return t
 
     def t_WORD(self, t):
-        r'[^0-9]+'
+        r'[^0-9^,]+'
         return t
 
-    t_PREPNOTE = r'[a-zA-Z\-\s,®0-9]+'
+    t_PREPNOTE = r'.+'
 
     def t_error(self, t):
         print("Illegal character '%s'" % t.value[0])
@@ -209,6 +212,7 @@ class IngredientParser:
                       | NUMBER WHITESPACE UNIT WHITESPACE WORD
                       | NUMBER WHITESPACE WORD
                       | ingredient PREPNOTE
+                      | WORD
         '''
         if (len(p) == 6):
             p[0] = p[5]
@@ -217,6 +221,9 @@ class IngredientParser:
             p[0] = p[3]
             self.ingredient = p[3]
         elif (len(p) == 3):
+            p[0] = p[1]
+            self.ingredient = p[1]
+        elif (len(p) == 2):
             p[0] = p[1]
             self.ingredient = p[1]
 
@@ -243,7 +250,7 @@ class IngredientParser:
     def parse(self, s):
         '''Given an input string, attempt to parse and return the ingredient part
         '''
-
+        self.ingredient = None
         self.num_ingredients_parsed += 1
 
         for ignored_ingredient in IngredientParser.INGREDIENTS_TO_IGNORE:
@@ -282,6 +289,7 @@ if __name__ == '__main__':
         r"1 1/2 teaspoons ground cinnamon",
         r"1 dash hot pepper sauce (such as Frank's RedHot®), or to taste",
         r"2 russet potatoes, scrubbed and cut into eighths",
+        r"Fresh raspeberries",
         # r"8 bars Baby Ruth ™ candy bars, chopped",
         # r"1 broiler/fryer chicken, cut up and skin removed",
         # r"salt to taste",
