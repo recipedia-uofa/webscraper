@@ -47,51 +47,6 @@ def threshold_ratio(s1, s2, threshold):
         return ratio
 
 
-def get_score(expression, fixed_ingredient):
-    '''Get a score between expression and fixed_ingredient by comparing how
-    similar they are.
-    '''
-
-    score = 0
-
-    expression = split(expression, string.punctuation + r'\s')
-    expression.reverse()
-    expression_len = len(expression)
-
-    fixed_ingredient = split(fixed_ingredient, string.punctuation + r'\s')
-    fixed_ingredient.reverse()
-    fixed_ingredient_len = len(fixed_ingredient)
-
-    matched = 0
-
-    expression_copy = list(expression)
-
-    # Using softmax so the weights add up to 1
-    # Reversed so it is more heavily weighted towards the end of the string
-    weight = list(range(fixed_ingredient_len))
-    weight.reverse()
-    weight = softmax(weight)
-
-    for i in range(0, len(fixed_ingredient)):
-        local_highest_score = float('-inf')
-        local_highest_idx = 0
-        if len(expression_copy) > 0:
-            for j in range(0, len(expression_copy)):
-                ratio = threshold_ratio(
-                    fixed_ingredient[i], expression_copy[j], THRESHOLD)
-                if ratio > local_highest_score:
-                    local_highest_score = ratio
-                    local_highest_idx = j
-            score += weight[i] * local_highest_score
-            if local_highest_score > 0:
-                matched += 2
-            expression_copy.pop(local_highest_idx)
-
-    matching_modifier = float(
-        matched) / float(expression_len + fixed_ingredient_len)
-    return score * matching_modifier
-
-
 def remove_adopositions(s, nlp):
     '''Given a string s and the spacy nlp engine, return a string without adpositions.
     For example, "shrimp in shell" -> "shrimp".
@@ -119,24 +74,6 @@ def load_ingredients(dir):
                     ingredients_dict[ingredient.strip()] = file
 
     return ingredients_dict
-
-
-def find_closest_match(expression, ingredients):
-    '''Find the closest ingredient in a dictionary of ingredients
-    that matches the given expression
-    '''
-    highest_score = float('-inf')
-    closest_match = None
-
-    for fixed_ingredient in ingredients.keys():
-
-        score = get_score(expression, fixed_ingredient)
-
-        if score > highest_score:
-            highest_score = score
-            closest_match = fixed_ingredient
-
-    return closest_match
 
 
 class IngredientParser:
@@ -247,6 +184,67 @@ class IngredientParser:
         lex.lex(module=self)
         yacc.yacc(module=self)
 
+    def get_score(self, expression, fixed_ingredient):
+        '''Get a score between expression and fixed_ingredient by comparing how
+        similar they are.
+        '''
+
+        score = 0
+
+        expression = split(expression, string.punctuation + r'\s')
+        expression.reverse()
+        expression_len = len(expression)
+
+        fixed_ingredient = split(fixed_ingredient, string.punctuation + r'\s')
+        fixed_ingredient.reverse()
+        fixed_ingredient_len = len(fixed_ingredient)
+
+        matched = 0
+
+        expression_copy = list(expression)
+
+        # Using softmax so the weights add up to 1
+        # Reversed so it is more heavily weighted towards the end of the string
+        weight = list(range(fixed_ingredient_len))
+        weight.reverse()
+        weight = softmax(weight)
+
+        for i in range(0, len(fixed_ingredient)):
+            local_highest_score = float('-inf')
+            local_highest_idx = 0
+            if len(expression_copy) > 0:
+                for j in range(0, len(expression_copy)):
+                    ratio = threshold_ratio(
+                        fixed_ingredient[i], expression_copy[j], THRESHOLD)
+                    if ratio > local_highest_score:
+                        local_highest_score = ratio
+                        local_highest_idx = j
+                score += weight[i] * local_highest_score
+                if local_highest_score > 0:
+                    matched += 2
+                expression_copy.pop(local_highest_idx)
+
+        matching_modifier = float(
+            matched) / float(expression_len + fixed_ingredient_len)
+        return score * matching_modifier
+
+    def find_closest_match(self, expression):
+        '''Find the closest ingredient in the dictionary of ingredients
+        that matches the given expression
+        '''
+        highest_score = float('-inf')
+        closest_match = None
+
+        for fixed_ingredient in self.ingredients.keys():
+
+            score = self.get_score(expression, fixed_ingredient)
+
+            if score > highest_score:
+                highest_score = score
+                closest_match = fixed_ingredient
+
+        return closest_match
+
     def parse(self, s):
         '''Given an input string, attempt to parse and return the ingredient part
         '''
@@ -263,7 +261,7 @@ class IngredientParser:
 
         if self.ingredient:
             singular_ingredient = _get_singular(self.ingredient)
-            return find_closest_match(singular_ingredient, self.ingredients)
+            return self.find_closest_match(singular_ingredient)
         else:
             self.quantity_parse_errors[s] += 1
             raise ValueError('Failed to parse:', s)
