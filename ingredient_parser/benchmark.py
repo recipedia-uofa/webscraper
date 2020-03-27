@@ -45,7 +45,7 @@ if __name__ == '__main__':
         # stats
         total_ingredients = 0
 
-        ingredient_parser = IngredientParser()
+        ingredient_parser = IngredientParser(benchmark=True)
         reader = csv.reader(f_input,  delimiter=',',quoting=csv.QUOTE_ALL)
         for row in reader:
             if line_number in test_lines:

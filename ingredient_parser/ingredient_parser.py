@@ -171,14 +171,16 @@ class IngredientParser:
         else:
             print('Unexpected end of input')
 
-    def __init__(self):
+    def __init__(self, benchmark=False):
 
         self.ingredient = None  # Variable to hold the parsed ingredient
         self.ingredients = load_ingredients(INGREDIENTS_DIR)
+        self.benchmark = False
 
-        # stats
-        self.num_ingredients_parsed = 0
-        self.quantity_parse_errors = collections.Counter()
+        if benchmark:
+            self.benchmark = True
+            self.num_ingredients_parsed = 0
+            self.quantity_parse_errors = collections.Counter()
 
         # Build the lexer and parser
         lex.lex(module=self)
@@ -249,7 +251,9 @@ class IngredientParser:
         '''Given an input string, attempt to parse and return the ingredient part
         '''
         self.ingredient = None
-        self.num_ingredients_parsed += 1
+
+        if self.benchmark:
+            self.num_ingredients_parsed += 1
 
         for ignored_ingredient in IngredientParser.INGREDIENTS_TO_IGNORE:
             if ignored_ingredient in s:
@@ -263,7 +267,8 @@ class IngredientParser:
             singular_ingredient = _get_singular(self.ingredient)
             return self.find_closest_match(singular_ingredient)
         else:
-            self.quantity_parse_errors[s] += 1
+            if self.benchmark:
+                self.quantity_parse_errors[s] += 1
             raise ValueError('Failed to parse:', s)
 
 
