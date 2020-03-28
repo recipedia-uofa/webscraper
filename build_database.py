@@ -83,19 +83,20 @@ class DatabaseBuilder():
         if id != url_id:
             return
 
-        for i in range(1, len(row)):
-            if (i < len(DatabaseBuilder.CSV_INDEX_TO_RELATIONSHIP)):
-                self.f_output.write('_:{} <{}> \"{}\" .\n'.format(
-                    id, DatabaseBuilder.CSV_INDEX_TO_RELATIONSHIP[i], row[i]))
-            else:
-                try:
-                    raw_ingredient = row[i]
-                    ingredient = self.ingredient_parser.parse(raw_ingredient)
-                    if ingredient:
-                        self.f_output.write('_:{} <contains> _:{} .\n'.format(
-                            id, ingredient.replace(' ', '_')))
-                except Exception as e:
-                    print(e)
+        raw_ingredients = row[len(DatabaseBuilder.CSV_INDEX_TO_RELATIONSHIP):]
+        parsed_ingredients = [self.ingredient_parser.parse(raw_ingredient) for raw_ingredient in raw_ingredients]
+        if None in parsed_ingredients:
+            print('Failed for recipe', id)
+            return
+        else:
+            for parsed_ingredient in parsed_ingredients:
+
+                self.f_output.write('_:{} <contains> _:{} .\n'.format(
+                    id, parsed_ingredient.replace(' ', '_')))
+
+        for i in range(1, len(DatabaseBuilder.CSV_INDEX_TO_RELATIONSHIP) - 1):
+            self.f_output.write('_:{} <{}> \"{}\" .\n'.format(
+                id, DatabaseBuilder.CSV_INDEX_TO_RELATIONSHIP[i], row[i]))
 
     def build(self, build_ingredients = True):
 

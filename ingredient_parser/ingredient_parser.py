@@ -95,6 +95,8 @@ class IngredientParser:
         'coloring',
     ]
 
+    MATCHING_THRESHOLD = 0.5
+
     # Used to convert between single and plural forms
     engine = inflect.engine()
 
@@ -181,6 +183,7 @@ class IngredientParser:
             self.benchmark = True
             self.num_ingredients_parsed = 0
             self.quantity_parse_errors = collections.Counter()
+            self.matching_parse_errors = collections.Counter()
             self.scores = list()
 
         # Build the lexer and parser
@@ -246,6 +249,11 @@ class IngredientParser:
                 highest_score = score
                 closest_match = fixed_ingredient
 
+        if highest_score < IngredientParser.MATCHING_THRESHOLD:
+            closest_match = None
+            if self.benchmark:
+                self.matching_parse_errors[expression] += 1
+
         if self.benchmark:
             self.scores.append(highest_score)
 
@@ -271,9 +279,7 @@ class IngredientParser:
             singular_ingredient = _get_singular(self.ingredient)
             return self.find_closest_match(singular_ingredient)
         else:
-            if self.benchmark:
-                self.quantity_parse_errors[s] += 1
-            raise ValueError('Failed to parse:', s)
+            return None
 
 
 if __name__ == '__main__':
