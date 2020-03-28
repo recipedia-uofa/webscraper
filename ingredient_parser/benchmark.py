@@ -6,6 +6,9 @@ from ingredient_parser import IngredientParser
 from build_database import DatabaseBuilder
 import os
 import csv
+import matplotlib
+import numpy as np
+import matplotlib.pyplot as plt
 
 
 if __name__ == '__main__':
@@ -65,6 +68,7 @@ if __name__ == '__main__':
     num_ingredients_parsed = ingredient_parser.num_ingredients_parsed
     quantity_parse_errors = ingredient_parser.quantity_parse_errors
     num_quantity_parse_errors = sum(quantity_parse_errors.values())
+    scores = ingredient_parser.scores
 
     print()
     print('Success rate for quantity parsing:',
@@ -72,6 +76,11 @@ if __name__ == '__main__':
 
     print()
     print('Top quantity failures:')
-
     for expression, num_failures in quantity_parse_errors.most_common(10):
         print('[{}] failed [{}] times'.format(expression, num_failures))
+
+    num_bins = 20
+    n, bins, patches = plt.hist(scores, num_bins, facecolor='blue', alpha=0.5)
+    plt.xlabel('score')
+    plt.ylabel('frequency')
+    plt.show()

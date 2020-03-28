@@ -181,6 +181,7 @@ class IngredientParser:
             self.benchmark = True
             self.num_ingredients_parsed = 0
             self.quantity_parse_errors = collections.Counter()
+            self.scores = list()
 
         # Build the lexer and parser
         lex.lex(module=self)
@@ -244,6 +245,9 @@ class IngredientParser:
             if score > highest_score:
                 highest_score = score
                 closest_match = fixed_ingredient
+
+        if self.benchmark:
+            self.scores.append(highest_score)
 
         return closest_match
 
