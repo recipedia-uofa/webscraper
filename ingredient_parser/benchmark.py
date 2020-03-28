@@ -67,7 +67,9 @@ if __name__ == '__main__':
 
     num_ingredients_parsed = ingredient_parser.num_ingredients_parsed
     quantity_parse_errors = ingredient_parser.quantity_parse_errors
+    matching_parse_errors = ingredient_parser.matching_parse_errors
     num_quantity_parse_errors = sum(quantity_parse_errors.values())
+    num_matching_parse_errors = sum(matching_parse_errors.values())
     scores = ingredient_parser.scores
 
     print()
@@ -77,6 +79,15 @@ if __name__ == '__main__':
     print()
     print('Top quantity failures:')
     for expression, num_failures in quantity_parse_errors.most_common(10):
+        print('[{}] failed [{}] times'.format(expression, num_failures))
+
+    print()
+    print('Success rate for matching:',
+        float(num_ingredients_parsed - num_matching_parse_errors) / float(num_ingredients_parsed))
+
+    print()
+    print('Top matching failures:')
+    for expression, num_failures in matching_parse_errors.most_common(10):
         print('[{}] failed [{}] times'.format(expression, num_failures))
 
     num_bins = 20

@@ -95,7 +95,7 @@ class IngredientParser:
         'coloring',
     ]
 
-    MATCHING_THRESHOLD = 0.5
+    MATCHING_THRESHOLD = 50
 
     # Used to convert between single and plural forms
     engine = inflect.engine()
@@ -250,12 +250,10 @@ class IngredientParser:
                 closest_match = fixed_ingredient
 
         if highest_score < IngredientParser.MATCHING_THRESHOLD:
-            closest_match = None
             if self.benchmark:
-                self.matching_parse_errors[expression] += 1
-
-        if self.benchmark:
-            self.scores.append(highest_score)
+                self.scores.append(highest_score)
+                self.matching_parse_errors[(expression, closest_match, highest_score)] += 1
+            closest_match = None
 
         return closest_match
 
