@@ -95,7 +95,7 @@ class IngredientParser:
         'coloring',
     ]
 
-    MATCHING_THRESHOLD = 50
+    MATCHING_THRESHOLD = 20
 
     # Used to convert between single and plural forms
     engine = inflect.engine()
@@ -227,11 +227,10 @@ class IngredientParser:
                         local_highest_idx = j
                 score += weight[i] * local_highest_score
                 if local_highest_score > 0:
-                    matched += 2
+                    matched += 1
                 expression_copy.pop(local_highest_idx)
 
-        matching_modifier = float(
-            matched) / float(expression_len + fixed_ingredient_len)
+        matching_modifier = float(matched) / float(fixed_ingredient_len)
         return score * matching_modifier
 
     def find_closest_match(self, expression):
@@ -249,11 +248,19 @@ class IngredientParser:
                 highest_score = score
                 closest_match = fixed_ingredient
 
+            if score == highest_score:
+                if len(fixed_ingredient) > len(closest_match):
+                    closest_match = fixed_ingredient
+
+        if self.benchmark:
+            self.scores.append(highest_score)
+
         if highest_score < IngredientParser.MATCHING_THRESHOLD:
             if self.benchmark:
-                self.scores.append(highest_score)
                 self.matching_parse_errors[(expression, closest_match, highest_score)] += 1
             closest_match = None
+        # else:
+        #     print(expression, closest_match, highest_score)
 
         return closest_match
 
