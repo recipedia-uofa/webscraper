@@ -5,9 +5,10 @@ from ingredient_parser import load_ingredients, INGREDIENTS_DIR
 from ingredient_parser import IngredientParser
 import csv
 import argparse
+from nutriscore import load_model, predict_nutriscore
 
 
-class DatabaseBuilder():
+class DatabaseBuilder:
 
     CSV_INDEX_TO_RELATIONSHIP = [
         'id',
@@ -41,12 +42,15 @@ class DatabaseBuilder():
         # Everything above this index is a <contains> relationship
     ]
 
-    def __init__(self, f_input, f_output):
+    IDX_TO_RELATIONSHIP_WITH_SCORE = CSV_INDEX_TO_RELATIONSHIP + ["nutriScore"]
+
+    def __init__(self, f_input, f_output, model):
         self.f_input = f_input
         self.f_output = f_output
 
         self.ingredients = load_ingredients(INGREDIENTS_DIR)
         self.ingredient_parser = IngredientParser()
+        self.nutriscore_model = load_model(model)
 
     def build_database_ingredients(self, f, ingredients):
         '''Given a File Object and a dictionary of ingredients (ingredient -> category),
@@ -72,9 +76,9 @@ class DatabaseBuilder():
                 ingredient.replace(' ', '_'), category))
 
     def parse_csv_row(self, row):
-        '''Given a row as a list and a File Object, dump the database for that row
+        """Given a row as a list and a File Object, dump the database for that row
         to the File Object.
-        '''
+        """
         id = row[0]
         url_id = row[1].split(r'/')[-3]
 
@@ -94,9 +98,14 @@ class DatabaseBuilder():
                 self.f_output.write('_:{} <contains> _:{} .\n'.format(
                     id, parsed_ingredient.replace(' ', '_')))
 
-        for i in range(1, len(DatabaseBuilder.CSV_INDEX_TO_RELATIONSHIP) - 1):
+        recipe_data = row[:len(DatabaseBuilder.CSV_INDEX_TO_RELATIONSHIP) - 1]
+        nutriscore = predict_nutriscore(self.nutriscore_model, recipe_data)
+        print(nutriscore)
+        recipe_data.append(nutriscore)
+
+        for i in range(1, len(DatabaseBuilder.IDX_TO_RELATIONSHIP_WITH_SCORE) - 1):
             self.f_output.write('_:{} <{}> \"{}\" .\n'.format(
-                id, DatabaseBuilder.CSV_INDEX_TO_RELATIONSHIP[i], row[i]))
+                id, DatabaseBuilder.IDX_TO_RELATIONSHIP_WITH_SCORE[i], recipe_data[i]))
 
     def build(self, build_ingredients = True):
 
@@ -130,10 +139,18 @@ if __name__ == '__main__':
         default='recipedia.rdf',
         type=str,
     )
+    parser.add_argument(
+        '-m',
+        '--model',
+        dest='model',
+        help='path to a serialized nutriscore model',
+        default='nutriscore.model',
+        type=str
+    )
     args = parser.parse_args()
 
     with open(args.input, 'r') as f_input:
         with open(args.output, 'w') as f_output:
 
-            builder = DatabaseBuilder(f_input, f_output)
+            builder = DatabaseBuilder(f_input, f_output, args.model)
             builder.build()
