@@ -10,6 +10,14 @@ from nutriscore import load_model, predict_nutriscore
 
 class DatabaseBuilder:
 
+    INGREDIENTS_TO_IGNORE = [
+        'salt',
+        'black pepper',
+        'water',
+        'skewers',
+        'coloring',
+    ]
+
     CSV_INDEX_TO_RELATIONSHIP = [
         'id',
         'url',
@@ -52,6 +60,9 @@ class DatabaseBuilder:
         self.ingredient_parser = IngredientParser()
         self.nutriscore_model = load_model(model)
 
+        self.num_recipes_processed = 0
+        self.num_recipes_failed = 0
+
     def build_database_ingredients(self, f, ingredients):
         '''Given a File Object and a dictionary of ingredients (ingredient -> category),
         write ingredient nodes, category nodes, and the relationships between
@@ -79,6 +90,9 @@ class DatabaseBuilder:
         """Given a row as a list and a File Object, dump the database for that row
         to the File Object.
         """
+
+        self.num_recipes_processed += 1
+
         id = row[0]
         url_id = row[1].split(r'/')[-3]
 
@@ -88,19 +102,27 @@ class DatabaseBuilder:
             return
 
         raw_ingredients = row[len(DatabaseBuilder.CSV_INDEX_TO_RELATIONSHIP):]
-        parsed_ingredients = [self.ingredient_parser.parse(raw_ingredient) for raw_ingredient in raw_ingredients]
-        if None in parsed_ingredients:
-            print('Failed for recipe', id)
-            return
-        else:
-            for parsed_ingredient in parsed_ingredients:
+        parsed_ingredients = []
 
-                self.f_output.write('_:{} <contains> _:{} .\n'.format(
-                    id, parsed_ingredient.replace(' ', '_')))
+        for raw_ingredient in raw_ingredients:
+            if any([ignored_ingredient in raw_ingredient for ignored_ingredient in DatabaseBuilder.INGREDIENTS_TO_IGNORE]):
+                continue
+            else:
+                parsed_ingredient = self.ingredient_parser.parse(raw_ingredient)
+                if parsed_ingredient is None:
+                    print('Failed parsing', raw_ingredient)
+                    self.num_recipes_failed += 1
+                    return
+                else:
+                    parsed_ingredients.append(parsed_ingredient)
+
+        for parsed_ingredient in parsed_ingredients:
+            self.f_output.write('_:{} <contains> _:{} .\n'.format(
+                id, parsed_ingredient.replace(' ', '_')))
 
         recipe_data = row[:len(DatabaseBuilder.CSV_INDEX_TO_RELATIONSHIP) - 1]
         nutriscore = predict_nutriscore(self.nutriscore_model, recipe_data)
-        print(nutriscore)
+        # print(nutriscore)
         recipe_data.append(nutriscore)
 
         for i in range(1, len(DatabaseBuilder.IDX_TO_RELATIONSHIP_WITH_SCORE) - 1):
@@ -119,6 +141,8 @@ class DatabaseBuilder:
             row = [col.replace(r'"', r'\"') for col in row]
             self.parse_csv_row(row)
 
+    def statistics(self):
+        print('failed {}/{} recipes'.format(self.num_recipes_failed, self.num_recipes_processed))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -154,3 +178,4 @@ if __name__ == '__main__':
 
             builder = DatabaseBuilder(f_input, f_output, args.model)
             builder.build()
+            builder.statistics()

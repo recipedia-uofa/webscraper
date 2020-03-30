@@ -78,14 +78,6 @@ def load_ingredients(dir):
 
 class IngredientParser:
 
-    INGREDIENTS_TO_IGNORE = [
-        'salt',
-        'black pepper',
-        'water',
-        'skewers',
-        'coloring',
-    ]
-
     MATCHING_THRESHOLD = 20
 
     # Used to convert between single and plural forms
@@ -184,10 +176,6 @@ class IngredientParser:
 
         if self.benchmark:
             self.num_ingredients_parsed += 1
-
-        for ignored_ingredient in IngredientParser.INGREDIENTS_TO_IGNORE:
-            if ignored_ingredient in s:
-                return None
 
         s = _remove_parenthesis(s).strip()
         s = remove_adopositions(s, nlp)
