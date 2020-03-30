@@ -58,5 +58,7 @@ class TestClass:
         assert parser.parse(r"assorted colors coloring") == None
 
     def test_018(self):
-        print("what?", parser.parse(r"Fresh raspberries"))
         assert parser.parse(r"Fresh raspberries") == "raspberry"
+
+    def test_019(self):
+        assert parser.parse(r"2 pounds skinless, boneless chicken breast halves") == "chicken breast"
