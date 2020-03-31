@@ -6,6 +6,7 @@ from ingredient_parser import IngredientParser
 import csv
 import argparse
 from nutriscore import load_model, predict_nutriscore
+import time
 
 
 class DatabaseBuilder:
@@ -60,6 +61,7 @@ class DatabaseBuilder:
 
         self.num_recipes_processed = 0
         self.num_recipes_failed = 0
+        self.duration = 0
 
     def build_database_ingredients(self, f, ingredients):
         '''Given a File Object and a dictionary of ingredients (ingredient -> category),
@@ -126,6 +128,8 @@ class DatabaseBuilder:
 
     def build(self, build_ingredients = True):
 
+        start_time = time.time()
+
         reader = csv.reader(self.f_input,  delimiter=',',
                             quoting=csv.QUOTE_ALL)
 
@@ -136,8 +140,11 @@ class DatabaseBuilder:
             row = [col.replace(r'"', r'\"') for col in row]
             self.parse_csv_row(row)
 
+        self.duration = time.time() - start_time
+
     def statistics(self):
-        print('failed {}/{} recipes'.format(self.num_recipes_failed, self.num_recipes_processed))
+        print('Took {}s per recipe on average'.format(self.duration / self.num_recipes_processed))
+        print('Failed {}/{} recipes'.format(self.num_recipes_failed, self.num_recipes_processed))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
