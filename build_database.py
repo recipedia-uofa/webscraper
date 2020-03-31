@@ -50,8 +50,6 @@ class DatabaseBuilder:
         # Everything above this index is a <contains> relationship
     ]
 
-    IDX_TO_RELATIONSHIP_WITH_SCORE = CSV_INDEX_TO_RELATIONSHIP + ["nutriScore"]
-
     def __init__(self, f_input, f_output, model):
         self.f_input = f_input
         self.f_output = f_output
@@ -121,13 +119,10 @@ class DatabaseBuilder:
                 id, parsed_ingredient.replace(' ', '_')))
 
         recipe_data = row[:len(DatabaseBuilder.CSV_INDEX_TO_RELATIONSHIP) - 1]
-        nutriscore = predict_nutriscore(self.nutriscore_model, recipe_data)
-        # print(nutriscore)
-        recipe_data.append(nutriscore)
+        nutrition_score = int(predict_nutriscore(self.nutriscore_model, recipe_data))
 
-        for i in range(1, len(DatabaseBuilder.IDX_TO_RELATIONSHIP_WITH_SCORE) - 1):
-            self.f_output.write('_:{} <{}> \"{}\" .\n'.format(
-                id, DatabaseBuilder.IDX_TO_RELATIONSHIP_WITH_SCORE[i], recipe_data[i]))
+        self.f_output.write('_:{} <nutrition_score> {} .\n'.format(id, nutrition_score))
+        # print(nutriscore)
 
     def build(self, build_ingredients = True):
 
