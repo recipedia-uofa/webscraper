@@ -20,7 +20,7 @@ class TestClass:
         f_output.write = Mock()
 
         with open(TEST_QUOTATION_MARK_CSV, 'r') as f_input:
-            builder = DatabaseBuilder(f_input, f_output)
+            builder = DatabaseBuilder(f_input, f_output, 'nutriscore.model')
             builder.build()
 
         for call in f_output.write.call_args_list:
@@ -37,7 +37,7 @@ class TestClass:
         f_output.write = Mock()
 
         with open(TEST_REDIRECTING, 'r') as f_input:
-            builder = DatabaseBuilder(f_input, f_output)
+            builder = DatabaseBuilder(f_input, f_output, 'nutriscore.model')
             builder.build(build_ingredients=False)
 
         # DatabaseBuilder should skip when redirection is detected (i.e. a
