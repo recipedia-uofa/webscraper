@@ -51,6 +51,10 @@ class DatabaseBuilder:
         # Everything above this index is a <contains> relationship
     ]
 
+    # parameters for beta distribution used for rating score
+    ALPHA = 3
+    BETA  = 2
+
     def __init__(self, f_input, f_output, model):
         self.f_input = f_input
         self.f_output = f_output
@@ -85,6 +89,11 @@ class DatabaseBuilder:
                 ingredient.replace(' ', '_')))
             f.write('_:{} <categorized_as> _:{} .\n'.format(
                 ingredient.replace(' ', '_'), category))
+
+    @staticmethod
+    def get_rating_score(average_rating, num_ratings, alpha, beta):
+        normalized_rating = average_rating / 5
+        return 5 * (alpha + normalized_rating * num_ratings) / (alpha + beta + num_ratings)
 
     def parse_csv_row(self, row):
         """Given a row as a list and a File Object, dump the database for that row
@@ -124,11 +133,17 @@ class DatabaseBuilder:
             self.f_output.write('_:{} <contains> _:{} .\n'.format(
                 id, parsed_ingredient.replace(' ', '_')))
 
+        # Calculate nutrition score
         recipe_data = row[:len(DatabaseBuilder.CSV_INDEX_TO_RELATIONSHIP) - 1]
         nutrition_score = predict_nutriscore(self.nutriscore_model, recipe_data)
-
         self.f_output.write('_:{} <nutrition_score> \"{:.2f}\" .\n'.format(id, nutrition_score))
         # print(nutriscore)
+
+        # Calculate rating score
+        average_rating = float(row[6])
+        num_ratings = float(row[7])
+        rating_score = DatabaseBuilder.get_rating_score(average_rating, num_ratings, DatabaseBuilder.ALPHA, DatabaseBuilder.BETA)
+        self.f_output.write('_:{} <rating_score> \"{:.2f}\" .\n'.format(id, rating_score))
 
     def build(self, build_ingredients = True):
 
