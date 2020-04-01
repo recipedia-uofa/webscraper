@@ -101,6 +101,10 @@ class DatabaseBuilder:
         if id != url_id:
             return
 
+        for i in range(1, len(DatabaseBuilder.CSV_INDEX_TO_RELATIONSHIP) - 1):
+            self.f_output.write('_:{} <{}> \"{}\" .\n'.format(
+                id, DatabaseBuilder.CSV_INDEX_TO_RELATIONSHIP[i], row[i]))
+
         raw_ingredients = row[len(DatabaseBuilder.CSV_INDEX_TO_RELATIONSHIP):]
         parsed_ingredients = []
 
@@ -121,9 +125,9 @@ class DatabaseBuilder:
                 id, parsed_ingredient.replace(' ', '_')))
 
         recipe_data = row[:len(DatabaseBuilder.CSV_INDEX_TO_RELATIONSHIP) - 1]
-        nutrition_score = int(predict_nutriscore(self.nutriscore_model, recipe_data))
+        nutrition_score = predict_nutriscore(self.nutriscore_model, recipe_data)
 
-        self.f_output.write('_:{} <nutrition_score> {} .\n'.format(id, nutrition_score))
+        self.f_output.write('_:{} <nutrition_score> \"{:.2f}\" .\n'.format(id, nutrition_score))
         # print(nutriscore)
 
     def build(self, build_ingredients = True):
@@ -145,6 +149,7 @@ class DatabaseBuilder:
     def statistics(self):
         print('Took {}s per recipe on average'.format(self.duration / self.num_recipes_processed))
         print('Failed {}/{} recipes'.format(self.num_recipes_failed, self.num_recipes_processed))
+        print(self.ingredient_parser.find_closest_match.cache_info())
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(

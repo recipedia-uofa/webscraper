@@ -9,6 +9,7 @@ import string
 from scipy.special import softmax
 import spacy
 import collections
+import functools
 
 nlp = spacy.load("en_core_web_sm")
 INGREDIENTS_DIR = os.path.join(os.path.dirname(
@@ -138,6 +139,7 @@ class IngredientParser:
         matching_modifier = float(matched) / float(fixed_ingredient_len)
         return score * matching_modifier
 
+    @functools.lru_cache(maxsize=None)
     def find_closest_match(self, expression):
         '''Find the closest ingredient in the dictionary of ingredients
         that matches the given expression
