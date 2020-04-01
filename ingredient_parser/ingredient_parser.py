@@ -78,100 +78,10 @@ def load_ingredients(dir):
 
 class IngredientParser:
 
-    units = [
-        'teaspoon',
-        'tablespoon',
-        'cup',
-        'package',
-        'pound',
-        'dash',
-    ]
-
-    INGREDIENTS_TO_IGNORE = [
-        'salt',
-        'black pepper',
-        'water',
-        'skewers',
-        'coloring',
-    ]
-
     MATCHING_THRESHOLD = 20
 
     # Used to convert between single and plural forms
     engine = inflect.engine()
-
-    # Build the regex for matching all units
-    for i in range(0, len(units)):
-        units.append(engine.plural(units[i]))
-    # Must be sorted so the plural forms are matched against first
-    units = sorted(units, key=len, reverse=1)
-
-    # used for matching quantity units (e.g. cup, cups, teaspoon, and etc.)
-    units_pattern = '(?:{})'.format(('|'.join(units)))
-
-    # Tokens
-    tokens = (
-        'UNIT',
-        'FRACTION',
-        'NUMBER',
-        'PREPNOTE',
-        'WORD',
-        'WHITESPACE'
-    )
-
-    @TOKEN(units_pattern)
-    def t_UNIT(self, t):
-        return t
-
-    def t_FRACTION(self, t):
-        r'(?:[0-9]+\s)?[1-9]\/[1-9]'
-        return t
-
-    def t_NUMBER(self, t):
-        r'[1-9][0-9]*'
-        return t
-
-    def t_WHITESPACE(self, t):
-        r'\s+'
-        return t
-
-    def t_WORD(self, t):
-        r'[^0-9^,]+'
-        return t
-
-    t_PREPNOTE = r'.+'
-
-    def t_error(self, t):
-        print("Illegal character '%s'" % t.value[0])
-        t.lexer.skip(1)
-
-    def p_ingredient(self, p):
-        '''ingredient : FRACTION WHITESPACE UNIT WHITESPACE WORD
-                      | FRACTION WHITESPACE WORD
-                      | NUMBER WHITESPACE UNIT WHITESPACE WORD
-                      | NUMBER WHITESPACE WORD
-                      | ingredient PREPNOTE
-                      | WORD
-        '''
-        if (len(p) == 6):
-            p[0] = p[5]
-            self.ingredient = p[5]
-        elif (len(p) == 4):
-            p[0] = p[3]
-            self.ingredient = p[3]
-        elif (len(p) == 3):
-            p[0] = p[1]
-            self.ingredient = p[1]
-        elif (len(p) == 2):
-            p[0] = p[1]
-            self.ingredient = p[1]
-
-    def p_error(self, p):
-        self.ingredient = None
-        if p:
-            print("Syntax error at '%s'" % p.value)
-        else:
-            print('Unexpected end of input')
 
     def __init__(self, benchmark=False):
 
@@ -182,13 +92,8 @@ class IngredientParser:
         if benchmark:
             self.benchmark = True
             self.num_ingredients_parsed = 0
-            self.quantity_parse_errors = collections.Counter()
             self.matching_parse_errors = collections.Counter()
             self.scores = list()
-
-        # Build the lexer and parser
-        lex.lex(module=self)
-        yacc.yacc(module=self)
 
     def get_score(self, expression, fixed_ingredient):
         '''Get a score between expression and fixed_ingredient by comparing how
@@ -272,19 +177,10 @@ class IngredientParser:
         if self.benchmark:
             self.num_ingredients_parsed += 1
 
-        for ignored_ingredient in IngredientParser.INGREDIENTS_TO_IGNORE:
-            if ignored_ingredient in s:
-                return None
-
         s = _remove_parenthesis(s).strip()
         s = remove_adopositions(s, nlp)
-        yacc.parse(s)
-
-        if self.ingredient:
-            singular_ingredient = _get_singular(self.ingredient)
-            return self.find_closest_match(singular_ingredient)
-        else:
-            return None
+        s = _get_singular(s)
+        return self.find_closest_match(s)
 
 
 if __name__ == '__main__':
