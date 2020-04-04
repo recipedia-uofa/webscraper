@@ -166,6 +166,7 @@ class DatabaseBuilder:
         print('Failed {}/{} recipes'.format(self.num_recipes_failed, self.num_recipes_processed))
         print(self.ingredient_parser.find_closest_match.cache_info())
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Script that builds the .rdf file from a csv file of recipes')
