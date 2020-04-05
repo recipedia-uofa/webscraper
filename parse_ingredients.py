@@ -19,6 +19,7 @@ CSV_INDEX_TO_RELATIONSHIP = [
     'url',
     'title',
     'img_url',
+    'score',
     'servings',
     'prep_time',
     'rating',
@@ -70,7 +71,8 @@ if __name__ == '__main__':
     assert(args.input.endswith('.csv'))
     assert(args.output.endswith('.csv'))
 
-    all_ingredients = load_ingredients(INGREDIENTS_DIR)
+    # all_ingredients = load_ingredients(INGREDIENTS_DIR)
+    # assert(False)
     ingredient_parser = IngredientParser()
 
     # Statistics
@@ -87,17 +89,21 @@ if __name__ == '__main__':
             failed_recipe = False
 
             for raw_ingredient in raw_ingredients:
+                # End condition
+                if raw_ingredient == "":
+                    break
+
                 if any([ignored_ingredient in raw_ingredient for ignored_ingredient in INGREDIENTS_TO_IGNORE]):
                     continue
+
+                parsed_ingredient = ingredient_parser.parse(raw_ingredient)
+                if parsed_ingredient is None:
+                    print('Failed parsing', raw_ingredient)
+                    num_recipes_failed += 1
+                    failed_recipe = True
+                    break
                 else:
-                    parsed_ingredient = ingredient_parser.parse(raw_ingredient)
-                    if parsed_ingredient is None:
-                        print('Failed parsing', raw_ingredient)
-                        num_recipes_failed += 1
-                        failed_recipe = True
-                        break
-                    else:
-                        parsed_ingredients.append(parsed_ingredient)
+                    parsed_ingredients.append(parsed_ingredient)
 
             if not failed_recipe:
                 writer.writerow(row[:len(CSV_INDEX_TO_RELATIONSHIP)] + parsed_ingredients)
