@@ -10,10 +10,9 @@ from scipy.special import softmax
 import spacy
 import collections
 import functools
+from load_ingredients import load_ingredients
 
 nlp = spacy.load("en_core_web_sm")
-INGREDIENTS_DIR = os.path.join(os.path.dirname(
-    os.path.abspath(__file__)), 'ingredients')
 THRESHOLD = 80
 separators = r'[{}]'.format(string.punctuation + r'\s')
 
@@ -61,22 +60,6 @@ def remove_adopositions(s, nlp):
     return ' '.join([token.text for token in doc if token.i not in indices_to_remove])
 
 
-def load_ingredients(dir):
-    '''Given a directory, load all ingredients under that directory and return
-    an ingredient dictionary that maps ingredients to its category.
-    '''
-
-    ingredients_dict = dict()
-
-    for file in os.listdir(dir):
-        if file not in ['.pytest_cache']:
-            with open(os.path.join(dir, file), 'r') as f:
-                for ingredient in f:
-                    ingredients_dict[ingredient.strip()] = file
-
-    return ingredients_dict
-
-
 class IngredientParser:
 
     MATCHING_THRESHOLD = 20
@@ -85,9 +68,8 @@ class IngredientParser:
     engine = inflect.engine()
 
     def __init__(self, benchmark=False):
+        self.ingredients, self.alias_map = load_ingredients()
 
-        self.ingredient = None  # Variable to hold the parsed ingredient
-        self.ingredients = load_ingredients(INGREDIENTS_DIR)
         self.benchmark = False
 
         if benchmark:
@@ -166,15 +148,17 @@ class IngredientParser:
             if self.benchmark:
                 self.matching_parse_errors[(expression, closest_match, highest_score)] += 1
             closest_match = None
-        # else:
-        #     print(expression, closest_match, highest_score)
+        else:
+            # Convert alias
+            closest_match = self.alias_map[closest_match]
+            # print(expression, "----", closest_match, highest_score)
 
         return closest_match
 
     def parse(self, s):
-        '''Given an input string, attempt to parse and return the ingredient part
-        '''
-        self.ingredient = None
+        """
+        Given an input string, attempt to parse and return the ingredient part
+        """
 
         if self.benchmark:
             self.num_ingredients_parsed += 1
