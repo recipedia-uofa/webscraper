@@ -1,5 +1,5 @@
 chocolate
-apple sauce
+apple sauce:applesauce
 strawberry jam
 graham cracker
 marshmallow
@@ -18,7 +18,7 @@ brownie mix
 chocolate pudding
 jello
 caramel
-chocolate powder
+cocoa:chocolate powder
 candy
 corn chips
 cookies
@@ -55,3 +55,4 @@ mint jelly
 currant jelly
 lemon jelly
 quince jelly
+tapioca

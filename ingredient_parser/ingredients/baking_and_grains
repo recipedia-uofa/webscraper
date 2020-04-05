@@ -4,7 +4,7 @@ flour
 bread
 baking powder
 baking soda
-bread crumbs
+bread crumbs:breadcrumbs
 cornstarch
 rolled oats
 noodle
@@ -33,7 +33,8 @@ angel hair
 coconut flake
 bread flour
 croutons
-lasagne
+spaghetti
+lasagne:lasagna
 pizza dough
 bagel
 puff pastry
@@ -87,3 +88,4 @@ challah
 sponge cake
 malt extract
 sorghum flour
+millet
