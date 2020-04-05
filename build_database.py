@@ -1,7 +1,7 @@
 import sys
 sys.path.append('ingredient_parser/')
 import os
-from ingredient_parser import load_ingredients, INGREDIENTS_DIR
+from load_ingredients import load_ingredients, INGREDIENTS_DIR
 from ingredient_parser import IngredientParser
 import csv
 import argparse
@@ -59,7 +59,7 @@ class DatabaseBuilder:
         self.f_input = f_input
         self.f_output = f_output
 
-        self.ingredients = load_ingredients(INGREDIENTS_DIR)
+        self.ingredients, self.alias_map = load_ingredients()
         self.ingredient_parser = IngredientParser()
         self.nutriscore_model = load_model(model)
 
@@ -67,12 +67,13 @@ class DatabaseBuilder:
         self.num_recipes_failed = 0
         self.duration = 0
 
-    def build_database_ingredients(self, f, ingredients):
-        '''Given a File Object and a dictionary of ingredients (ingredient -> category),
+    @staticmethod
+    def build_database_ingredients(f, ingredients, aliases):
+        """
+        Given a File Object and a dictionary of ingredients (ingredient -> category),
         write ingredient nodes, category nodes, and the relationships between
         ingredients and categories.
-        '''
-        ingredients = load_ingredients(INGREDIENTS_DIR)
+        """
         categories = os.listdir(INGREDIENTS_DIR)
 
         # Write category nodes
@@ -82,7 +83,8 @@ class DatabaseBuilder:
                 category, category.replace('_', ' ')))
 
         # Write ingredients nodes and the relationship between ingredient and category
-        for ingredient, category in ingredients.items():
+        for ingredient in aliases.values():
+            category = ingredients[ingredient]
             f.write('_:{} <iname> \"{}\" .\n'.format(
                 ingredient.replace(' ', '_'), ingredient))
             f.write('_:{} <dgraph.type> \"Ingredient\" .\n'.format(
@@ -96,7 +98,8 @@ class DatabaseBuilder:
         return 5 * (alpha + normalized_rating * num_ratings) / (alpha + beta + num_ratings)
 
     def parse_csv_row(self, row):
-        """Given a row as a list and a File Object, dump the database for that row
+        """
+        Given a row as a list and a File Object, dump the database for that row
         to the File Object.
         """
 
@@ -127,6 +130,7 @@ class DatabaseBuilder:
                     self.num_recipes_failed += 1
                     return
                 else:
+                    parsed_ingredient = self.alias_map[parsed_ingredient]
                     parsed_ingredients.append(parsed_ingredient)
 
         for parsed_ingredient in parsed_ingredients:
@@ -145,15 +149,12 @@ class DatabaseBuilder:
         rating_score = DatabaseBuilder.get_rating_score(average_rating, num_ratings, DatabaseBuilder.ALPHA, DatabaseBuilder.BETA)
         self.f_output.write('_:{} <rating_score> \"{:.2f}\" .\n'.format(id, rating_score))
 
-    def build(self, build_ingredients = True):
-
+    def build(self, build_ingredients=True):
         start_time = time.time()
-
-        reader = csv.reader(self.f_input,  delimiter=',',
-                            quoting=csv.QUOTE_ALL)
+        reader = csv.reader(self.f_input,  delimiter=',', quoting=csv.QUOTE_ALL)
 
         if build_ingredients:
-            self.build_database_ingredients(self.f_output, self.ingredients)
+            self.build_database_ingredients(self.f_output, self.ingredients, self.alias_map)
 
         for row in reader:
             row = [col.replace(r'"', r'\"') for col in row]
@@ -196,9 +197,7 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
 
-    with open(args.input, 'r') as f_input:
-        with open(args.output, 'w') as f_output:
-
+    with open(args.input, 'r') as f_input, open(args.output, 'w') as f_output:
             builder = DatabaseBuilder(f_input, f_output, args.model)
             builder.build()
             builder.statistics()

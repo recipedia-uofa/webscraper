@@ -3,7 +3,6 @@ import argparse
 
 import sys
 sys.path.append('ingredient_parser/')
-from ingredient_parser import load_ingredients, INGREDIENTS_DIR
 from ingredient_parser import IngredientParser
 
 INGREDIENTS_TO_IGNORE = [
@@ -71,8 +70,6 @@ if __name__ == '__main__':
     assert(args.input.endswith('.csv'))
     assert(args.output.endswith('.csv'))
 
-    # all_ingredients = load_ingredients(INGREDIENTS_DIR)
-    # assert(False)
     ingredient_parser = IngredientParser()
 
     # Statistics
