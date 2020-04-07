@@ -106,5 +106,5 @@ if __name__ == '__main__':
                 writer.writerow(row[:len(CSV_INDEX_TO_RELATIONSHIP)] + parsed_ingredients)
                 successes += 1
                 print('Parsed {}'.format(successes))
-            
+
     print("Done!")

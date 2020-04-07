@@ -5,3 +5,4 @@ recipedia.rdf
 *.ipynb
 *.pyc
 .idea/
+/htmlcov

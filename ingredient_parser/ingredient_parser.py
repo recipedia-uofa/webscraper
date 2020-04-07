@@ -1,3 +1,5 @@
+# REQ 9-3: Ingredient parser: a script that parses the ingredients. At this stage, ingredients will be parsed into the amount and the actual ingredient.
+
 import inflect
 import ply.lex as lex
 import ply.yacc as yacc

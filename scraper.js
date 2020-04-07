@@ -1,3 +1,5 @@
+// REQ 9-1: Recipe downloader: downloads recipe pages from allrecipe.com. Only raw htmls will be downloaded at this stage
+
 const puppeteer = require('puppeteer');
 var ArgumentParser = require('argparse').ArgumentParser;
 const fs = require('fs');
