@@ -1,4 +1,4 @@
-# REQ 9-4: Database builder: a script that takes the parsed data and creates a SparQL database.
+# REQ 9-4: Database builder
 
 import sys
 sys.path.append('ingredient_parser/')
@@ -146,10 +146,7 @@ class DatabaseBuilder:
                     parsed_ingredients.append(parsed_ingredient)
 
 
-        # REQ 1-1: Recipe ontology contains relationships. Store an ontology where the
-        # nodes in the graph are ingredients and recipes. Recipes have a bidirectional
-        # “contains” relationship with ingredients. Satisfying this requirement can
-        # include having the ontology information stored row-wise.
+        # REQ 1-1: Recipe ontology contains relationships.
         for parsed_ingredient in parsed_ingredients:
             self.f_output.write('_:{} <contains> _:{} .\n'.format(
                 id, parsed_ingredient.replace(' ', '_')))
@@ -160,7 +157,7 @@ class DatabaseBuilder:
         rating_score = DatabaseBuilder.get_rating_score(average_rating, num_ratings, DatabaseBuilder.ALPHA, DatabaseBuilder.BETA)
         self.f_output.write('_:{} <rating_score> \"{:.2f}\" .\n'.format(id, rating_score))
 
-    # REQ 1-2: Store ontology in queryable format. Store the ontology in the RDF format to support SPARQL queries.
+    # REQ 1-2: Store ontology in queryable format.
     def build(self, build_ingredients=True):
         start_time = time.time()
         reader = csv.reader(self.f_input,  delimiter=',', quoting=csv.QUOTE_ALL)

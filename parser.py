@@ -1,4 +1,4 @@
-# REQ 9-2: HTML parser: a script that parses relevant data from the html pages.
+# REQ 9-2: HTML parser
 
 import argparse
 from bs4 import BeautifulSoup
