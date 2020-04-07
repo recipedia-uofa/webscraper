@@ -113,6 +113,16 @@ class DatabaseBuilder:
         if id != url_id:
             return
 
+        try:
+            # Calculate nutrition score
+            recipe_data = row[:len(DatabaseBuilder.CSV_INDEX_TO_RELATIONSHIP) - 1]
+            nutrition_score = predict_nutriscore(self.nutriscore_model, recipe_data)
+            self.f_output.write('_:{} <nutrition_score> \"{:.2f}\" .\n'.format(id, nutrition_score))
+            # print(nutriscore)
+        except ZeroDivisionError:
+            print("recipe {} failed: division by zero".format(id))
+            return
+
         for i in range(1, len(DatabaseBuilder.CSV_INDEX_TO_RELATIONSHIP) - 1):
             self.f_output.write('_:{} <{}> \"{}\" .\n'.format(
                 id, DatabaseBuilder.CSV_INDEX_TO_RELATIONSHIP[i], row[i]))
@@ -136,12 +146,6 @@ class DatabaseBuilder:
         for parsed_ingredient in parsed_ingredients:
             self.f_output.write('_:{} <contains> _:{} .\n'.format(
                 id, parsed_ingredient.replace(' ', '_')))
-
-        # Calculate nutrition score
-        recipe_data = row[:len(DatabaseBuilder.CSV_INDEX_TO_RELATIONSHIP) - 1]
-        nutrition_score = predict_nutriscore(self.nutriscore_model, recipe_data)
-        self.f_output.write('_:{} <nutrition_score> \"{:.2f}\" .\n'.format(id, nutrition_score))
-        # print(nutriscore)
 
         # Calculate rating score
         average_rating = float(row[6])
