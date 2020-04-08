@@ -6,3 +6,5 @@ recipedia.rdf
 *.pyc
 .idea/
 /htmlcov
+.env
+.coverage
